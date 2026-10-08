@@ -1,0 +1,10 @@
+/* 模块样式总装 — 每个模块拥有独立文件，禁止共享编辑 */
+@import url('modules/shell.css');
+@import url('modules/map.css');
+@import url('modules/chat.css');
+@import url('modules/hrd.css');
+@import url('modules/yaji.css');
+@import url('modules/quiz.css');
+@import url('modules/gene.css');
+@import url('modules/human.css');
+@import url('modules/space.css');

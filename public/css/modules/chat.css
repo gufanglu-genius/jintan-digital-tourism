@@ -1,0 +1,381 @@
+/* ============================================================
+   模块 02 · 对话便签 — 文人智能体
+   手写便签条 / 另一侧纸条 / 落笔光标 / 人设 chips
+   只用 tokens.css 变量：纸黄 · 墨 · Riso · 硬偏移阴影 · 手工感动效
+   ============================================================ */
+
+.chat-shell {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------- 人设 chips 行 ---------------- */
+.chat-personas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.62rem 0.55rem;
+  align-items: stretch;
+  padding-bottom: 0.95rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1.5px dashed rgba(34, 31, 26, 0.35);
+}
+
+.chat-personas[hidden] { display: none !important; }
+
+.chip {
+  --chip-tilt: var(--tilt-5);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1em;
+  padding: 0.44em 0.8em 0.48em;
+  background: var(--paper-card);
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--lift);
+  transform: rotate(var(--chip-tilt));
+  transition:
+    transform var(--dur-fast) var(--ease-paper),
+    box-shadow var(--dur-fast) var(--ease-paper),
+    background var(--dur-fast) linear;
+  animation: chip-in var(--dur-mid) var(--ease-paper) backwards;
+  animation-delay: calc(var(--chip-i, 0) * 70ms);
+}
+
+.chip:nth-child(5n+1) { --chip-tilt: -2.6deg; }
+.chip:nth-child(5n+2) { --chip-tilt: 1.8deg; }
+.chip:nth-child(5n+3) { --chip-tilt: -1.4deg; }
+.chip:nth-child(5n+4) { --chip-tilt: 2.8deg; }
+.chip:nth-child(5n+5) { --chip-tilt: -3.2deg; }
+
+.chip-name {
+  font-family: var(--font-serif);
+  font-size: 1.04rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.1em;
+}
+
+.chip-meta {
+  font-size: var(--fs-micro);
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.chip:hover {
+  transform: rotate(0deg) translateY(-2px);
+  box-shadow: var(--lift-strong);
+}
+
+.chip:active { transform: translate(2px, 2px) rotate(0deg); box-shadow: 1px 1px 0 var(--ink); }
+
+.chip:focus-visible {
+  outline: 2px solid var(--riso-pink);
+  outline-offset: 3px;
+}
+
+/* 选中态：墨底 + Riso 套印偏移 */
+.chip.is-active {
+  background: var(--ink);
+  color: var(--paper);
+  transform: rotate(0deg);
+  box-shadow: 4px 4px 0 var(--riso-red);
+}
+
+.chip.is-active .chip-meta { color: var(--paper-deep); }
+
+.chip.is-active .chip-name {
+  text-shadow: 2px 0 0 rgba(255, 0, 110, 0.55), -2px 0 0 rgba(0, 255, 204, 0.45);
+}
+
+/* ---------------- 主区：消息流 + 递条子 ---------------- */
+.chat-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chat-log {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  height: clamp(300px, 46vh, 480px);
+  padding: clamp(0.9rem, 2.4vw, 1.5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 30px,
+    rgba(34, 31, 26, 0.055) 30px 31px
+  );
+  border: 2px solid var(--ink);
+  box-shadow:
+    inset 3px 3px 0 rgba(34, 31, 26, 0.1),
+    6px 6px 0 rgba(0, 255, 204, 0.22);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-faint) transparent;
+}
+
+.chat-log::-webkit-scrollbar { width: 10px; }
+.chat-log::-webkit-scrollbar-track { background: transparent; }
+.chat-log::-webkit-scrollbar-thumb {
+  background: var(--ink-faint);
+  border: 2px solid var(--paper);
+}
+
+/* ---------------- 便签消息 ---------------- */
+.note {
+  position: relative;
+  max-width: min(82%, 34rem);
+  padding: 0.72rem 1rem 0.88rem;
+  border: 2px solid var(--ink);
+  box-shadow: var(--lift);
+  transition: transform var(--dur-fast) var(--ease-paper);
+  animation: note-in var(--dur-mid) var(--ease-paper) backwards;
+}
+
+.note.them {
+  align-self: flex-start;
+  background: var(--paper-card);
+  transform: rotate(var(--tilt-2));
+}
+
+.note.them:nth-child(even) { transform: rotate(var(--tilt-5)); }
+
+.note.me {
+  align-self: flex-end;
+  max-width: min(68%, 26rem);
+  padding: 0.55rem 0.85rem 0.65rem;
+  background: var(--paper-deep);
+  border-style: dashed;
+  transform: rotate(var(--tilt-3));
+}
+
+.note.opening {
+  border-width: 2.5px;
+  box-shadow: var(--lift-strong);
+}
+
+/* 悬停把便签抚平（各变体的旋转特异性不同，逐条覆盖） */
+.note:hover,
+.note.them:hover,
+.note.them:nth-child(even):hover,
+.note.me:hover,
+.note.opening:hover {
+  transform: rotate(0deg) translateY(-2px);
+}
+
+.note-meta {
+  display: block;
+  margin-bottom: 0.45em;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+}
+
+.note.me .note-meta {
+  text-align: right;
+  letter-spacing: 0.2em;
+}
+
+.note-body {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 对方：宋体正文（手写便签的“字”） */
+.note.them .note-body {
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+/* 我方：mono 小字纸条 */
+.note.me .note-body {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+/* 署名行：serif 斜体 */
+.note-sign {
+  display: block;
+  margin-top: 0.7em;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  text-align: right;
+  color: var(--ink-soft);
+}
+
+/* 落笔光标 */
+.note-body.streaming::after {
+  content: "";
+  display: inline-block;
+  width: 0.48em;
+  height: 0.95em;
+  margin-left: 2px;
+  vertical-align: -0.1em;
+  background: var(--riso-pink);
+  animation: chat-caret 900ms steps(1, end) infinite;
+}
+
+/* 错误条 */
+.note.error {
+  align-self: stretch;
+  max-width: 100%;
+  background: var(--paper-card);
+  border-color: var(--riso-red);
+  box-shadow: 3px 3px 0 rgba(232, 69, 43, 0.35);
+}
+
+.note.error .note-meta { color: var(--riso-red); }
+
+.note.error .note-body {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  color: var(--riso-red);
+}
+
+/* ---------------- 空态 ---------------- */
+.chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  margin: auto;
+  padding: 1rem;
+  text-align: center;
+}
+
+.chat-empty p { margin: 0; }
+
+.chat-empty-rule {
+  display: block;
+  width: 74px;
+  height: 10px;
+  opacity: 0.4;
+  transform: rotate(-3deg);
+}
+
+/* ---------------- 落笔状态条 ---------------- */
+.chat-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  letter-spacing: 0.05em;
+  color: var(--riso-red);
+}
+
+.chat-status[hidden] { display: none !important; }
+
+.chat-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  background: var(--riso-red);
+  border: 1.5px solid var(--ink);
+  animation: chat-dot 1s steps(2, end) infinite;
+}
+
+.chat-stop {
+  margin-left: auto;
+  padding: 0.3em 0.85em;
+  font-size: var(--fs-micro);
+  box-shadow: 2px 2px 0 var(--ink);
+  color: var(--ink);
+}
+
+.chat-stop:hover { box-shadow: 1px 1px 0 var(--ink); }
+
+/* ---------------- 递条子（输入行） ---------------- */
+.chat-input {
+  display: flex;
+  align-items: stretch;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+
+.chat-input input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.95rem;
+}
+
+.chat-input .btn { flex: 0 0 auto; }
+
+.chat-input .btn:disabled,
+.chat-input .btn:disabled:hover,
+.chat-input .btn:disabled:active {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+  box-shadow: 2px 2px 0 var(--ink-faint);
+}
+
+/* ---------------- 动效 ---------------- */
+@keyframes chip-in {
+  from { opacity: 0; transform: translateY(10px) rotate(0deg); }
+}
+
+@keyframes note-in {
+  from { opacity: 0; transform: translateY(14px) rotate(0deg); }
+}
+
+@keyframes chat-caret {
+  50% { opacity: 0; }
+}
+
+@keyframes chat-dot {
+  50% { transform: translateY(-3px); }
+}
+
+/* ---------------- 响应式（375px 起可用） ---------------- */
+@media (max-width: 760px) {
+  .chat-log {
+    height: clamp(280px, 54vh, 440px);
+    gap: 0.9rem;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 27px,
+      rgba(34, 31, 26, 0.055) 27px 28px
+    );
+  }
+
+  .note { max-width: 92%; }
+  .note.me { max-width: 84%; }
+
+  .chip { animation-delay: 0ms; }
+
+  .chat-input { gap: 0.45rem; }
+  .chat-input input { font-size: 16px; } /* 避免 iOS 聚焦缩放 */
+}
+
+/* ---------------- 减弱动效 ---------------- */
+@media (prefers-reduced-motion: reduce) {
+  .chip,
+  .note { animation: none; }
+
+  .chip,
+  .chip:hover,
+  .chip:active,
+  .note,
+  .note:hover { transition: none; }
+
+  .note-body.streaming::after { animation: none; }
+  .chat-dot { animation: none; }
+}

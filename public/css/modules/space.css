@@ -1,0 +1,515 @@
+/* ============================================================
+   05 · 空间皮肤 — 把非遗住进去
+   预览：贴在手账上的建筑图纸（纸片剪贴客房立面 · mono 尺寸标注）
+   侧栏：皮肤选择 + 场景文案（points 原文）+ 生成这间房
+   换肤：palette 走 --sk1…--sk5，切换时 riso 错位过渡
+   ============================================================ */
+
+.space-shell [hidden] { display: none !important; }
+
+/* ---------------- 外壳：左图纸 / 右文案 ---------------- */
+.space-shell.card {
+  --sp-h: clamp(430px, 56vh, 560px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(252px, 24vw, 342px);
+  padding: 0;
+  background: var(--paper-card);
+}
+
+/* ---------------- 预览：坐标纸 + 图纸 ---------------- */
+.space-preview {
+  position: relative;
+  min-height: var(--sp-h);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: clamp(0.9rem, 2.4vw, 1.4rem);
+  border-right: 2px solid var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(rgba(34, 31, 26, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 31, 26, 0.07) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.sp-cap { margin: 0; }
+
+.sp-stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+/* —— 图纸：一张钉在坐标纸上的立面图 —— */
+.sp-sheet {
+  position: relative;
+  flex: 1 1 320px;
+  min-width: 0;
+  margin: 0;
+  padding: clamp(0.6rem, 1.8vw, 1rem);
+  background: var(--paper-card);
+  border: 2px solid var(--ink);
+  box-shadow: var(--lift-strong);
+  transform: rotate(-0.55deg);
+}
+
+.sp-sheet::after {
+  content: "";
+  position: absolute;
+  right: -13px;
+  bottom: -13px;
+  width: 92px;
+  height: 92px;
+  background-image: radial-gradient(circle, rgba(34, 31, 26, 0.5) 1.1px, transparent 1.5px);
+  background-size: 8px 8px;
+  opacity: 0.4;
+  transform: rotate(8deg);
+  pointer-events: none;
+}
+
+.sp-draw { position: relative; }
+
+.sp-svg { width: 100%; height: auto; display: block; }
+
+/* —— 图签栏（mono） —— */
+.sp-title {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.35em 0.9em;
+  margin-top: 0.5rem;
+  padding-top: 0.45em;
+  border-top: 1.5px solid var(--ink);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+.sp-title-name { color: var(--riso-red); }
+
+/* ============================================================
+   立面拼贴：纸片造型（无圆角 · 硬偏移 · 走皮肤变量）
+   ============================================================ */
+.sp-wall { fill: var(--paper); }
+.sp-floor { fill: var(--paper-shade); }
+.sp-base { fill: var(--sk4, var(--paper-deep)); }
+.sp-room { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+.sp-frame { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+.sp-rule { stroke: var(--ink); stroke-width: 2; fill: none; }
+.sp-board { stroke: rgba(34, 31, 26, 0.26); stroke-width: 1.5; fill: none; }
+.sp-ink-fill { fill: var(--ink); }
+
+.sp-glass { fill: var(--sk3, var(--paper-deep)); }
+.sp-hill { fill: var(--sk2, var(--clay)); }
+.sp-sun { fill: var(--sk1, var(--riso-red)); }
+.sp-curtain {
+  fill: var(--sk1, var(--clay));
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.sp-shade {
+  fill: var(--sk2, var(--bamboo));
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.sp-art-bg { fill: var(--sk1, var(--riso-red)); }
+.sp-art-zig { fill: var(--sk5, var(--paper-card)); }
+.sp-art-sun { fill: var(--sk2, var(--bamboo)); }
+.sp-art-base { fill: var(--sk3, var(--paper-deep)); }
+
+.sp-head {
+  fill: var(--paper-deep);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.sp-mattress {
+  fill: var(--paper-card);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.sp-pillow {
+  fill: var(--sk5, var(--paper-card));
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.sp-blanket {
+  fill: var(--sk1, var(--clay));
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.sp-blanket-2 { fill: var(--sk2, var(--bamboo)); }
+
+.sp-leaf {
+  fill: var(--sk4, var(--bamboo));
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.sp-pot {
+  fill: var(--sk2, var(--clay));
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.sp-rug {
+  fill: var(--sk3, var(--paper-deep));
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.sp-rug-in { fill: var(--sk1, var(--clay)); }
+.sp-rug-mid { fill: var(--sk2, var(--bamboo)); }
+
+/* 硬偏移纸厚阴影（禁柔化） */
+.sp-hard { filter: drop-shadow(3px 3px 0 rgba(34, 31, 26, 0.16)); }
+
+/* —— 标注与尺寸（mono） —— */
+.sp-callout { pointer-events: none; }
+.sp-leader {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  fill: none;
+}
+.sp-call {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  fill: var(--ink-faint);
+}
+.sp-dim line {
+  stroke: var(--ink-soft);
+  stroke-width: 1.25;
+  fill: none;
+}
+.sp-dim-t {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  fill: var(--ink-faint);
+}
+
+/* —— 换色过渡 + riso 错位 —— */
+.sp-svg rect,
+.sp-svg circle,
+.sp-svg polygon,
+.sp-svg path,
+.sp-svg line {
+  transition: fill var(--dur-mid) var(--ease-paper), stroke var(--dur-mid) var(--ease-paper);
+}
+
+.sp-ghost {
+  fill: var(--sk1, var(--riso-red));
+  opacity: 0;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.sp-svg.is-swap .sp-scene { animation: spRiso 460ms var(--ease-paper) both; }
+.sp-svg.is-swap .sp-ghost { animation: spGhost 460ms steps(7, end) both; }
+
+@keyframes spRiso {
+  0% { transform: translate(7px, -4px); }
+  35% { transform: translate(-5px, 3px); }
+  70% { transform: translate(3px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes spGhost {
+  0% { opacity: 0.45; transform: translate(7px, -4px); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+
+/* ---------------- AI 成图：贴在图纸旁 ---------------- */
+.sp-print {
+  position: relative;
+  flex: 0 1 200px;
+  min-width: 148px;
+  margin: 0;
+  padding: 8px 8px 6px;
+  background: var(--paper-card);
+  border: 2px solid var(--ink);
+  box-shadow: var(--lift);
+  transform: rotate(2.4deg);
+  animation: spPrintIn 420ms var(--ease-paper) both;
+}
+
+.sp-print img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border: 1.5px solid var(--ink);
+  background: var(--paper-deep);
+}
+
+.sp-print figcaption {
+  margin-top: 0.45em;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+@keyframes spPrintIn {
+  from { opacity: 0; transform: rotate(7deg) translateY(12px); }
+  to { opacity: 1; transform: rotate(2.4deg) translateY(0); }
+}
+
+/* ============================================================
+   侧栏：场景名 + 换肤 + 文案 + 生成
+   ============================================================ */
+.space-side {
+  height: var(--sp-h);
+  padding: 15px 15px 18px;
+  background: var(--paper);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-faint) transparent;
+}
+
+.space-side::-webkit-scrollbar { width: 8px; }
+.space-side::-webkit-scrollbar-thumb { background: var(--ink-faint); }
+.space-side::-webkit-scrollbar-track { background: transparent; }
+
+/* —— 头部 —— */
+.sp-head {
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1.5px solid var(--ink);
+}
+
+.sp-name {
+  font-family: var(--font-serif);
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  margin: 0.32em 0 0.45em;
+  line-height: 1.25;
+}
+
+.sp-name em {
+  font-style: normal;
+  font-size: 0.68em;
+  letter-spacing: 0.08em;
+  color: var(--riso-red);
+}
+
+.sp-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+
+.sp-swatches { display: inline-flex; gap: 4px; }
+
+.sp-sw {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--ink);
+  box-shadow: 1.5px 1.5px 0 rgba(34, 31, 26, 0.2);
+}
+
+.sp-sw:nth-child(odd) { transform: rotate(-5deg); }
+.sp-sw:nth-child(even) { transform: rotate(4deg); }
+
+/* —— 换肤选择 —— */
+.sp-picks { margin: 0 0 1rem; }
+.sp-picks .kicker { display: block; margin-bottom: 0.55em; }
+
+.sp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.sp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42em;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+  padding: 0.42em 0.6em 0.36em;
+  border: 1.5px solid var(--ink);
+  background: var(--paper-card);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.22);
+  transition: transform var(--dur-fast) var(--ease-paper),
+    box-shadow var(--dur-fast) var(--ease-paper), background var(--dur-fast), color var(--dur-fast);
+}
+
+.sp-chip:hover {
+  transform: translate(-1px, -1px) rotate(-1.6deg);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.sp-chip:focus-visible {
+  outline: 2px dashed var(--riso-pink);
+  outline-offset: 2px;
+}
+
+.sp-chip.active {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 3px 3px 0 var(--riso-red);
+}
+
+.sp-chip.active .sp-chip-dot { border-color: var(--paper); }
+
+.sp-chip-dot {
+  display: block;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--ink);
+}
+
+/* —— 场景文案（points 原文） —— */
+.sp-body .kicker {
+  display: block;
+  margin-bottom: 0.45em;
+  color: var(--riso-red);
+}
+
+.sp-story,
+.sp-copy,
+.sp-coop { margin-bottom: 1rem; }
+
+.sp-story p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+.sp-pt-name {
+  font-family: var(--font-serif);
+  font-size: 1.06rem;
+  margin: 0.15em 0 0.45em;
+}
+
+.sp-hook {
+  margin: 0 0 0.6em;
+  padding: 0.1em 0 0.1em 0.7em;
+  font-family: var(--font-serif);
+  font-size: 0.97rem;
+  line-height: 1.7;
+  color: var(--ink);
+  border-left: 3px solid var(--sk1, var(--riso-red));
+}
+
+.sp-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+.sp-coop {
+  padding: 0.7em 0.8em 0.75em;
+  border: 1.5px dashed var(--ink-faint);
+  background: var(--paper-card);
+  transform: rotate(-0.6deg);
+  box-shadow: var(--lift);
+}
+
+.sp-coop .sp-pt-name { font-size: 1rem; }
+.sp-coop .sp-hook {
+  margin: 0;
+  border-left-color: var(--sk2, var(--riso-red));
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.sp-copy-empty p {
+  margin: 0.3em 0 0;
+  font-size: 0.88rem;
+  color: var(--ink-faint);
+}
+
+/* —— 生成动作 —— */
+.sp-act {
+  margin-top: 0.2rem;
+  padding-top: 0.85rem;
+  border-top: 1.5px dashed var(--ink-faint);
+}
+
+.sp-act .btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.sp-act .btn[disabled] {
+  opacity: 0.72;
+  cursor: progress;
+  transform: none;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.sp-status {
+  margin: 0.65em 0 0;
+  min-height: 1.5em;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.sp-status.err { color: var(--riso-red); }
+
+/* ============================================================
+   响应式
+   ============================================================ */
+@media (max-width: 900px) {
+  .space-shell.card {
+    grid-template-columns: minmax(0, 1fr);
+    --sp-h: clamp(360px, 48vh, 460px);
+  }
+  .space-preview {
+    border-right: 0;
+    border-bottom: 2px solid var(--ink);
+    min-height: auto;
+  }
+  .space-side {
+    height: auto;
+    max-height: min(64vh, 540px);
+  }
+}
+
+@media (max-width: 560px) {
+  .space-shell.card { --sp-h: auto; }
+  .space-preview { padding: 0.85rem 0.75rem 1rem; }
+  .sp-sheet { transform: rotate(-0.4deg); }
+  .sp-print { flex: 1 1 100%; max-width: 260px; }
+  .sp-title { font-size: 9px; letter-spacing: 0.1em; }
+  .space-side { padding: 13px 13px 16px; max-height: none; }
+}
+
+@media (max-width: 380px) {
+  .sp-chip span { max-width: 8.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* ============================================================
+   尊重减弱动效
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .sp-svg.is-swap .sp-scene,
+  .sp-svg.is-swap .sp-ghost,
+  .sp-print { animation: none; }
+  .sp-svg rect,
+  .sp-svg circle,
+  .sp-svg polygon,
+  .sp-svg path,
+  .sp-svg line,
+  .sp-chip { transition: none; }
+  .sp-chip:hover { transform: none; box-shadow: 2px 2px 0 var(--ink); }
+}
