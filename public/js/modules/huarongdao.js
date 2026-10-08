@@ -14,10 +14,10 @@ const LS_KEY = 'jsws-hrd-v1';
 
 /* 前身项目图片（已压缩进 public/assets/hrd/），数据缺新图时兜底 */
 const OLD_IMGS = [
-  '/assets/hrd/luanzhenxiu.jpg',
-  '/assets/hrd/damagao.jpg',
-  '/assets/hrd/shubi.jpg',
-  '/assets/hrd/liuqingzhuke.jpg',
+  'assets/hrd/luanzhenxiu.jpg',
+  'assets/hrd/damagao.jpg',
+  'assets/hrd/shubi.jpg',
+  'assets/hrd/liuqingzhuke.jpg',
 ];
 
 /* 数据文件为空时的兜底关卡：内容逐字取自前身项目 nh-huarongdao 的真实关卡资料 */
@@ -125,16 +125,16 @@ function candidates(lv) {
   const out = [];
   const push = (u) => { if (u && out.indexOf(u) < 0) out.push(u); };
   // 正式关卡图优先（lvN.jpg 已随包发布），命中即停，避免探测死路径刷 404
-  push(`/assets/hrd/lv${lv.index + 1}.jpg`);
-  push(`/assets/hrd/lv${lv.index + 1}.png`);
-  push(`/assets/hrd/level-${lv.index + 1}.jpg`);
-  push(`/assets/hrd/level-${lv.index + 1}.png`);
+  push(`assets/hrd/lv${lv.index + 1}.jpg`);
+  push(`assets/hrd/lv${lv.index + 1}.png`);
+  push(`assets/hrd/level-${lv.index + 1}.jpg`);
+  push(`assets/hrd/level-${lv.index + 1}.png`);
   const slugs = [lv.name, lv.sub, lv.artifact]
     .filter((s) => typeof s === 'string' && s && !isNumeric(s));
   slugs.forEach((s) => {
     const enc = encodeURIComponent(s);
-    push(`/assets/hrd/${enc}.jpg`);
-    push(`/assets/hrd/${enc}.png`);
+    push(`assets/hrd/${enc}.jpg`);
+    push(`assets/hrd/${enc}.png`);
   });
   OLD_IMGS.forEach((u) => push(u));
   return out;

@@ -132,7 +132,7 @@ function shuffle(a) {
 const pad = (n) => String(n).padStart(2, '0');
 
 function asset(name) {
-  return name ? '/assets/yaji/' + name : '';
+  return name ? 'assets/yaji/' + name : '';
 }
 
 /* ---------------- 数据归一 ---------------- */
