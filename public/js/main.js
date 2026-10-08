@@ -180,10 +180,29 @@ function bootPlayTabs() {
   });
 }
 
+/* ---------- 后端探活（GitHub Pages 静态托管没有 /api/*） ---------- */
+async function probeBackend() {
+  const be = { srv: false, ai: false };
+  const onPages = location.hostname === 'github.io' || location.hostname.endsWith('.github.io');
+  if (!onPages) {
+    // 静态域名上探活只会白吃一个 404；其余域名（本地/自部署）真实探测
+    try {
+      const r = await fetch('api/health', { cache: 'no-store' });
+      const j = await r.json();
+      be.srv = !!(r.ok && j.ok);
+      be.ai = be.srv && !!j.hasKey;
+    } catch { /* 无后端：静态降级 */ }
+  }
+  window.__BACKEND__ = be;
+  document.body.classList.toggle('no-srv', !be.srv);
+  document.body.classList.toggle('no-ai', !be.ai);
+}
+
 /* ---------- 启动 ---------- */
 async function boot() {
   paintMeta();
   bootNav();
+  await probeBackend();
 
   const [story, points, personas, quiz, games, tts, gene] = await Promise.all([
     loadJSON('story'),

@@ -232,6 +232,23 @@ input:focus, textarea:focus, select:focus {
   html { scroll-behavior: auto; }
 }
 
+/* ---------------- 云端能力未接入标注（静态托管下由 body 类点亮） ---------------- */
+.offline-note {
+  display: none;
+  margin: 0 0 var(--gap-sm);
+  padding: 0.5em 0.9em;
+  border: 1.5px dashed var(--riso-red);
+  background: var(--paper-deep);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  transform: rotate(-0.4deg);
+}
+
+body.no-ai .offline-note.note-ai { display: block; }
+body.no-srv .offline-note.note-srv { display: block; }
+
 /* ---------------- 响应式 ---------------- */
 @media (max-width: 760px) {
   .topbar { flex-wrap: wrap; transform: none; }

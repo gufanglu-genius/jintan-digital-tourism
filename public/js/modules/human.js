@@ -502,6 +502,10 @@ export function initHuman(container, data) {
 
   /* ============ 请求 /api/tts ============ */
   async function request(script) {
+    if (window.__BACKEND__ && window.__BACKEND__.srv === false) {
+      fallbackShow(script); /* 无后端：直接逐字字幕，不打必败请求 */
+      return;
+    }
     stopAll();
     st.mode = 'loading';
     stage.classList.add('is-loading');

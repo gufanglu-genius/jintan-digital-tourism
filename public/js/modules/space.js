@@ -493,6 +493,10 @@ export function initSpace(container, data) {
 
   async function generate(btn) {
     if (st.busy || st.dead || !skins.length) return;
+    if (window.__BACKEND__ && window.__BACKEND__.ai === false) {
+      setStatus('暂不支持访问，全量配置后可以使用', true);
+      return;
+    }
     st.busy = true;
     if (btn) {
       btn.disabled = true;

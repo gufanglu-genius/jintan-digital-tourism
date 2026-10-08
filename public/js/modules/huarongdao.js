@@ -822,6 +822,10 @@ function boot(container, data) {
   async function genImage() {
     const lv = S.lv;
     if (!lv || !lv.imagePrompt || lv.__genBusy) return;
+    if (window.__BACKEND__ && window.__BACKEND__.ai === false) {
+      toast('暂不支持访问，全量配置后可以使用');
+      return;
+    }
     lv.__genBusy = true;
     const btn = S.els.play ? S.els.play.querySelector('[data-act="gen"]') : null;
     if (btn) { btn.disabled = true; btn.textContent = '生成中…'; }

@@ -348,6 +348,12 @@ export function initChat(container, data) {
     saveBucket(pid, bucket);
     toBottom(true);
 
+    if (window.__BACKEND__ && window.__BACKEND__.ai === false) {
+      log.appendChild(errorEl('暂不支持访问，全量配置后可以使用'));
+      toBottom(true);
+      return;
+    }
+
     /* 当前消息单独发送，历史只取此前最近 10 条 */
     const history = bucket.slice(0, -1).slice(-HISTORY_LIMIT);
 

@@ -1340,6 +1340,10 @@ export function initGene(container, data) {
 
   async function aiGenerate(btn) {
     if (st.aiBusy || st.dead) return;
+    if (window.__BACKEND__ && window.__BACKEND__.ai === false) {
+      setStatus('暂不支持访问，全量配置后可以使用', true);
+      return;
+    }
     st.aiBusy = true;
     if (btn) btn.disabled = true;
     const gName = st.gene ? st.gene.name : '金坛纹样'; // 提交瞬间的基因名，轮询十几秒内换基因也标注正确的出处
