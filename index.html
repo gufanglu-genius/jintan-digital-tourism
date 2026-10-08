@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>金沙文枢 · 遗韵新生 — 金坛文旅数字创新</title>
+  <meta name="description" content="基于Z世代的文旅融合与非遗科普：三星村遗址、茅山、长荡湖、东方盐湖城的数字创新场景。" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/modules.css" />
+</head>
+<body>
+
+  <!-- ============ 顶部纸条导航 ============ -->
+  <header class="topbar">
+    <a class="brand" href="#top">金沙文枢<em>·</em>遗韵新生</a>
+    <button class="nav-toggle" id="navToggle" aria-label="展开导航">目录</button>
+    <ul class="nav-links" id="navLinks"><!-- 由 story.json 注入 --></ul>
+  </header>
+
+  <main id="top">
+
+    <!-- ============ 卷首 · 手账封面 ============ -->
+    <section class="section hero" id="hero">
+      <div class="hero-paper">
+        <span class="tape hero-tape" style="top:-12px; left:12%; transform:rotate(-4deg);"></span>
+        <p class="kicker" id="heroKicker">JINTAN · FIELD NOTES № 01</p>
+        <h1 class="display" id="heroTitle">金沙文枢 · 遗韵新生</h1>
+        <p class="lede" id="heroSub"></p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#map">翻开手账</a>
+          <a class="btn ghost" href="#story">先读卷首语</a>
+        </div>
+        <div class="hero-meta mono" id="heroMeta"></div>
+      </div>
+      <div class="hero-side">
+        <span class="hero-ghost" aria-hidden="true">遗韵</span>
+        <div class="hero-stamp"><span class="stamp">金坛 · 田野</span></div>
+        <a class="hero-scroll mono" href="#story">展卷 ↓</a>
+      </div>
+    </section>
+
+    <!-- ============ 卷首语 · 五幕故事线 ============ -->
+    <section class="section" id="story">
+      <div class="section-head">
+        <span class="folio">00</span>
+        <h2>卷首语 · 一个断层与一次入场</h2>
+      </div>
+      <div class="acts" id="acts"><!-- 五幕由 story.json 注入 --></div>
+    </section>
+
+    <!-- ============ 01 · 勘探图（地图） ============ -->
+    <section class="section" id="map">
+      <div class="section-head">
+        <span class="folio">01</span>
+        <h2>勘探图 · 金坛十八处</h2>
+        <p class="kicker">FIELD MAP — 钉在纸上的非遗与山水</p>
+      </div>
+      <div class="map-shell card" id="mapShell">
+        <span class="tape" style="top:-13px; right:10%; transform:rotate(3deg);"></span>
+        <div id="mapCanvas"></div>
+        <aside class="map-side" id="mapSide">
+          <div class="map-side-empty mono">← 点击图钉，展开这一页</div>
+        </aside>
+      </div>
+      <div class="map-filters" id="mapFilters"></div>
+    </section>
+
+    <!-- ============ 02 · 对话便签（智能体） ============ -->
+    <section class="section" id="chat">
+      <div class="section-head">
+        <span class="folio">02</span>
+        <h2>对话便签 · 问五位金坛文人</h2>
+        <p class="kicker">PERSONA CHAT — 一人管一行</p>
+      </div>
+      <p class="offline-note note-ai">对话服务 · 暂不支持访问，全量配置后可以使用</p>
+      <div class="chat-shell card" id="chatShell">
+        <div class="chat-personas" id="chatPersonas"></div>
+        <div class="chat-main">
+          <div class="chat-log" id="chatLog"></div>
+          <form class="chat-input" id="chatForm">
+            <input type="text" id="chatText" placeholder="问点什么：三星村怎么挖出来的？/ 给我排条一日游…" autocomplete="off" />
+            <button class="btn primary" type="submit">递条子</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 03 · 玩学（游戏 × 研学） ============ -->
+    <section class="section" id="play">
+      <div class="section-head">
+        <span class="folio">03</span>
+        <h2>玩学铺 · 拼图、牌局与研学任务</h2>
+        <p class="kicker">PLAY &amp; LEARN — 吸睛三秒，留住三天</p>
+      </div>
+      <p class="offline-note note-ai">华容道 AI 配图 · 暂不支持访问，全量配置后可以使用</p>
+      <div class="play-tabs" id="playTabs">
+        <button class="btn active" data-tab="hrd">非遗华容道</button>
+        <button class="btn" data-tab="yaji">文人雅集</button>
+        <button class="btn" data-tab="quiz">研学任务卡</button>
+      </div>
+      <div class="play-stage card" id="playStage">
+        <span class="tape" style="top:-13px; left:8%; transform:rotate(-5deg);"></span>
+        <div class="play-pane" id="paneHrd"></div>
+        <div class="play-pane" id="paneYaji" hidden></div>
+        <div class="play-pane" id="paneQuiz" hidden></div>
+      </div>
+    </section>
+
+    <!-- ============ 04 · 共创（基因编辑器 × 数字人） ============ -->
+    <section class="section" id="create">
+      <div class="section-head">
+        <span class="folio">04</span>
+        <h2>共创台 · 改一条纹样，录一段讲解</h2>
+        <p class="kicker">GENE EDITOR × DIGITAL HUMAN</p>
+      </div>
+      <div class="create-grid">
+        <div class="card gene-card" id="geneCard">
+          <h3>审美基因编辑器</h3>
+          <p class="kicker">拖动参数，生成你的金坛纹样</p>
+          <p class="offline-note note-ai">AI 出图 · 暂不支持访问，全量配置后可以使用</p>
+          <div class="gene-body">
+            <canvas id="geneCanvas" width="480" height="480"></canvas>
+            <div class="gene-controls" id="geneControls"></div>
+          </div>
+          <div class="gene-meta" id="geneMeta"></div>
+        </div>
+        <div class="card human-card" id="humanCard">
+          <h3>数字人讲一段</h3>
+          <p class="kicker">选一段讲解词，看口型跟上</p>
+          <p class="offline-note note-srv">讲解语音 · 暂不支持访问，全量配置后可以使用</p>
+          <div class="human-stage" id="humanStage"></div>
+          <div class="human-picks" id="humanPicks"></div>
+          <div class="human-log mono" id="humanLog"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 05 · 空间（沉浸 × 产业） ============ -->
+    <section class="section" id="space">
+      <div class="section-head">
+        <span class="folio">05</span>
+        <h2>空间页 · 把非遗住进去</h2>
+        <p class="kicker">SPATIAL SKIN — 空间即科普入口</p>
+      </div>
+      <p class="offline-note note-ai">AI 生成图 · 暂不支持访问，全量配置后可以使用</p>
+      <div class="space-shell card" id="spaceShell">
+        <div class="space-preview" id="spacePreview"></div>
+        <div class="space-side" id="spaceSide"></div>
+      </div>
+    </section>
+
+    <!-- ============ 06 · 愿景 ============ -->
+    <section class="section" id="vision">
+      <div class="section-head">
+        <span class="folio">06</span>
+        <h2>封底 · 从一座城到一个品类</h2>
+      </div>
+      <div class="vision-body" id="visionBody"></div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="footer-rule halftone"></div>
+      <p id="footerText"></p>
+      <p class="kicker">GOLDEN SAND · HERITAGE REBORN — 金坛文旅数字创新场景 · 高校赛道</p>
+      <p class="footer-author">作者 <span class="at">@</span>古方路杰出青年</p>
+    </footer>
+  </main>
+
+  <!-- 模块挂载点 -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

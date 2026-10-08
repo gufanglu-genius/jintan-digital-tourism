@@ -1,0 +1,116 @@
+/* ============================================================
+   金沙文枢 — 设计令牌
+   Anchor: Lo-Fi（田野手账 / 独立刊物）
+   纸黄底 · 系统三面碰撞 · 旋转拼贴 · 半调网点 · Riso 错位套印
+   ============================================================ */
+
+:root {
+  /* —— 表面：纸（Lo-Fi 专用纸黄，比 cream 更饱和） —— */
+  --paper: #e8e0c0;
+  --paper-deep: #ddd2ab;
+  --paper-shade: #d4c79c;
+  --paper-card: #f0e9cf;
+  --ink: #221f1a;
+  --ink-soft: #4a443a;
+  --ink-faint: #7a7263;
+
+  /* —— Riso 油墨（套印错位专用） —— */
+  --riso-pink: #ff006e;
+  --riso-cyan: #00ffcc;
+  --riso-red: #e8452b;
+  --riso-blue: #3d55ff;
+
+  /* —— 语义色（取自金坛材质：陶、竹、湖） —— */
+  --clay: #b0603c;   /* 三星村陶 */
+  --bamboo: #5f7a52; /* 茅山竹青 */
+  --lake: #4a7a8c;   /* 长荡湖 */
+
+  /* —— 字体：系统三面碰撞（Lo-Fi 要求 mixed system fonts） —— */
+  --font-serif: "Times New Roman", "Songti SC", "Noto Serif SC", "SimSun", serif;
+  --font-sans: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "Courier New", "SF Mono", Menlo, monospace;
+
+  /* —— 字号（紧凑手账比例） —— */
+  --fs-display: clamp(2.6rem, 7vw, 5.4rem);
+  --fs-h2: clamp(1.7rem, 3.6vw, 2.6rem);
+  --fs-h3: clamp(1.15rem, 2vw, 1.4rem);
+  --fs-body: 1rem;
+  --fs-small: 0.82rem;
+  --fs-micro: 0.7rem;
+
+  /* —— 行距与字距 —— */
+  --lh-tight: 1.12;
+  --lh-body: 1.75;
+  --ls-display: 0.02em;
+
+  /* —— 旋转（贴纸 2–8°） —— */
+  --tilt-1: -2.2deg;
+  --tilt-2: 1.6deg;
+  --tilt-3: -3.5deg;
+  --tilt-4: 2.8deg;
+  --tilt-5: -1.2deg;
+
+  /* —— 间距 —— */
+  --gap-xs: 0.5rem;
+  --gap-sm: 1rem;
+  --gap-md: 1.75rem;
+  --gap-lg: 3rem;
+  --gap-xl: 5.5rem;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+
+  /* —— 纸厚阴影（硬偏移，Lo-Fi 无柔化体系） —— */
+  --lift: 3px 3px 0 rgba(34, 31, 26, 0.18);
+  --lift-strong: 5px 5px 0 rgba(34, 31, 26, 0.22);
+
+  /* —— 动效：手工感，非丝滑 —— */
+  --ease-paper: cubic-bezier(0.22, 0.9, 0.3, 1.08);
+  --dur-fast: 160ms;
+  --dur-mid: 320ms;
+  --dur-slow: 640ms;
+
+  /* —— 层叠 —— */
+  --z-tape: 40;
+  --z-nav: 90;
+  --z-modal: 120;
+  --z-fx: 150;
+}
+
+/* —— 半调网点（Lo-Fi 标志性材质） —— */
+.halftone {
+  background-image: radial-gradient(circle, rgba(34, 31, 26, 0.55) 1px, transparent 1.4px);
+  background-size: 7px 7px;
+}
+
+/* —— Riso 错位套印标题 —— */
+.riso {
+  text-shadow: 3px 0 0 var(--riso-pink), -3px 0 0 var(--riso-cyan);
+}
+
+/* —— 胶带 —— */
+.tape {
+  position: absolute;
+  width: 84px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.42);
+  border-left: 1px dashed rgba(34, 31, 26, 0.25);
+  border-right: 1px dashed rgba(34, 31, 26, 0.25);
+  box-shadow: var(--lift);
+  z-index: var(--z-tape);
+  pointer-events: none;
+}
+
+/* —— 印章（纸面红印） —— */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2.5px solid var(--riso-red);
+  color: var(--riso-red);
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  padding: 0.28em 0.5em 0.22em;
+  transform: rotate(-6deg);
+  opacity: 0.88;
+  mix-blend-mode: multiply;
+}

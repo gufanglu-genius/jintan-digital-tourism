@@ -1,0 +1,662 @@
+/* ============================================================
+   审美基因编辑器 — 纹样车间（Lo-Fi 版画工作台）
+   画版＝贴在纸上的版画（纸边框 + 硬偏移阴影 + 错位青版）
+   参数＝手账纸条旋钮（方角 range，纸底刻度轨道）
+   基因切换＝活字签 · 色板＝油墨方块 · 三面字体碰撞
+   全部取 tokens.css 令牌：无新色值、无圆角、无毛玻璃、无光晕
+   ============================================================ */
+
+/* ---------------- 共创台两栏（左：基因编辑器 / 右：数字人） —— */
+.create-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+  gap: var(--gap-md);
+  align-items: start;
+}
+
+/* ---------------- 卡片抬头 ---------------- */
+.gene-card {
+  position: relative;
+}
+
+.gene-card > h3 { margin-bottom: 0.15em; }
+
+.gene-card > .kicker {
+  display: block;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1.5px dashed var(--ink-faint);
+}
+
+/* JS 注入的空态 / 隐藏开关必须压过组件的 display */
+.gene-card [hidden] { display: none !important; }
+
+/* ---------------- 基因切换：活字签 ---------------- */
+.gene-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.6rem;
+  margin: 0 0 var(--gap-sm);
+}
+
+.gene-tab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  padding: 0.4em 0.72em 0.36em;
+  border: 2px solid var(--ink);
+  background: var(--paper-card);
+  color: var(--ink);
+  font-size: var(--fs-small);
+  line-height: 1.35;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.2);
+  animation: gene-fade 240ms var(--ease-paper) both;
+  animation-delay: calc(var(--gi, 0) * 45ms);
+  transition: transform var(--dur-fast) var(--ease-paper),
+    box-shadow var(--dur-fast) var(--ease-paper), background var(--dur-fast);
+}
+
+/* 拼贴倾斜：每签一格，2° 上下 */
+.gene-tab:nth-child(4n+1) { transform: rotate(-1.7deg); }
+.gene-tab:nth-child(4n+2) { transform: rotate(1.3deg); }
+.gene-tab:nth-child(4n+3) { transform: rotate(-0.9deg); }
+.gene-tab:nth-child(4n+4) { transform: rotate(1.9deg); }
+
+.gene-tab .tab-no {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.14em;
+  color: var(--riso-red);
+}
+
+.gene-tab .tab-name {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.gene-tab:hover {
+  transform: translateY(-2px) rotate(0deg);
+  box-shadow: var(--lift);
+  background: var(--paper-deep);
+}
+
+.gene-tab[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  transform: translateY(-2px) rotate(-1deg);
+  box-shadow: 3px 3px 0 var(--riso-pink);
+}
+
+.gene-tab[aria-pressed="true"] .tab-no { color: var(--riso-cyan); }
+.gene-tab[aria-pressed="true"] .tab-name { color: var(--paper); }
+
+/* ---------------- 工作区：画版 + 控制台（窄屏单列） —— */
+.gene-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap-sm);
+}
+
+/* 画版：像贴在纸上的版画 —— 纸边框 + 硬阴影 + 左上错位青版 */
+.gene-frame {
+  position: relative;
+  max-width: calc(480px + 26px); /* 画布 480 + 内边距 22 + 边框 4 */
+  padding: 11px;
+  background: var(--paper-deep);
+  border: 2px solid var(--ink);
+  box-shadow: var(--lift-strong), -6px -6px 0 -2px var(--riso-cyan);
+  transform: rotate(-0.9deg);
+  animation: gene-fade 320ms var(--ease-paper) both;
+}
+
+.gene-frame canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+}
+
+.gene-caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.3rem 0.8rem;
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1.5px dashed var(--ink-faint);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+/* ---------------- 控制台 ---------------- */
+.gene-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+/* —— 对称：纸面选项 —— */
+.gene-sym {
+  padding-bottom: 0.85rem;
+  border-bottom: 1.5px dashed var(--ink-faint);
+}
+
+.gene-sym > .kicker {
+  display: block;
+  margin-bottom: 0.5em;
+}
+
+.gene-sym-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gene-chip,
+.gene-fold {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  letter-spacing: 0.06em;
+  padding: 0.3em 0.7em;
+  border: 2px solid var(--ink);
+  background: var(--paper-card);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.2);
+  transition: transform var(--dur-fast) var(--ease-paper),
+    box-shadow var(--dur-fast) var(--ease-paper), background var(--dur-fast);
+}
+
+.gene-fold {
+  min-width: 2.2em;
+  padding: 0.18em 0.45em;
+  text-align: center;
+}
+
+.gene-chip:hover,
+.gene-fold:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--lift);
+}
+
+.gene-chip:active,
+.gene-fold:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(34, 31, 26, 0.2);
+}
+
+.gene-chip[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 2px 2px 0 var(--riso-cyan);
+  transform: translate(-1px, -1px);
+}
+
+.gene-fold[aria-pressed="true"] {
+  background: var(--riso-red);
+  color: var(--paper-card);
+  box-shadow: 2px 2px 0 var(--ink);
+  transform: translate(-1px, -1px);
+}
+
+.gene-folds {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.15rem;
+}
+
+.gene-folds[hidden] { display: none !important; }
+
+.fold-label {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+  margin-right: 0.1rem;
+}
+
+/* —— 旋钮纸条：手账便签贴在控制台上 —— */
+.gene-knobs {
+  counter-reset: knob;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 0.7rem;
+}
+
+.gene-knob {
+  position: relative;
+  display: block;
+  padding: 0.6rem 0.75rem 0.72rem;
+  background: var(--paper-card);
+  border: 1.5px solid var(--ink);
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.18);
+  animation: gene-fade 260ms var(--ease-paper) both;
+  animation-delay: calc(var(--ki, 0) * 45ms);
+  transition: transform var(--dur-fast) var(--ease-paper),
+    box-shadow var(--dur-fast) var(--ease-paper);
+}
+
+.gene-knob:nth-child(odd) { transform: rotate(-0.5deg); }
+.gene-knob:nth-child(even) { transform: rotate(0.6deg); }
+
+.gene-knob:hover {
+  transform: rotate(0deg) translateY(-2px);
+  box-shadow: var(--lift);
+}
+
+.knob-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.55rem;
+}
+
+.knob-label {
+  counter-increment: knob;
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+/* 便签编号：红墨等宽小字，像打样单 */
+.knob-label::before {
+  content: counter(knob, decimal-leading-zero) " ";
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  color: var(--riso-red);
+  margin-right: 0.35em;
+}
+
+.knob-val {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+  padding: 0.14em 0.45em;
+  border: 1.5px solid var(--ink);
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.gene-knob-empty {
+  margin: 0;
+  padding: 0.65em 0.75em;
+  border: 1.5px dashed var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+/* —— range：纸条轨道（刻度为硬停格线，非光晕） + 方角旋钮头 —— */
+.gene-knob input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.gene-knob input[type="range"]:focus { outline: none; }
+
+.gene-knob input[type="range"]:focus-visible {
+  outline: 2px dashed var(--riso-pink);
+  outline-offset: 2px;
+}
+
+.gene-knob input[type="range"]::-webkit-slider-runnable-track {
+  height: 12px;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 9px,
+    rgba(34, 31, 26, 0.28) 9px 10px
+  );
+  border: 1.5px solid var(--ink);
+  box-shadow: inset 1.5px 1.5px 0 rgba(34, 31, 26, 0.1);
+}
+
+.gene-knob input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 24px;
+  margin-top: -7.5px; /* 对中轨道（内容 12 + 边框 3） */
+  background-color: var(--riso-red);
+  background-image: linear-gradient(
+    to right,
+    transparent 0 40%,
+    var(--paper-card) 40% 60%,
+    transparent 60%
+  );
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.32);
+}
+
+.gene-knob input[type="range"]:active::-webkit-slider-thumb {
+  background-color: var(--riso-pink);
+  box-shadow: 1px 1px 0 rgba(34, 31, 26, 0.32);
+}
+
+.gene-knob input[type="range"]::-moz-range-track {
+  height: 12px;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 9px,
+    rgba(34, 31, 26, 0.28) 9px 10px
+  );
+  border: 1.5px solid var(--ink);
+}
+
+.gene-knob input[type="range"]::-moz-range-thumb {
+  width: 13px;
+  height: 22px;
+  background-color: var(--riso-red);
+  background-image: linear-gradient(
+    to right,
+    transparent 0 40%,
+    var(--paper-card) 40% 60%,
+    transparent 60%
+  );
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.32);
+}
+
+.gene-knob input[type="range"]:active::-moz-range-thumb {
+  background-color: var(--riso-pink);
+}
+
+/* —— 动作行：拓印 / AI —— */
+.gene-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.gene-actions .btn {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+/* 「拓印一张」按钮态：主按钮 hover 走 riso 粉版 */
+.gene-actions .btn.primary:hover { background: var(--riso-pink); }
+
+.gene-actions .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.2);
+}
+
+.gene-actions .btn:focus-visible {
+  outline: 2px dashed var(--riso-pink);
+  outline-offset: 3px;
+}
+
+/* —— 状态条：纸面留言 —— */
+.gene-status {
+  min-height: 1.4em;
+  margin: 0;
+  padding-left: 0.6em;
+  border-left: 3px solid var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.gene-status:empty {
+  min-height: 0.8em;
+  border-left-color: transparent;
+}
+
+.gene-status.is-err {
+  border-left-color: var(--riso-red);
+  color: var(--riso-red);
+  font-weight: 700;
+}
+
+/* ---------------- meta：源流 / 色板 / 成图 ---------------- */
+.gene-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: var(--gap-sm) var(--gap-md);
+  margin-top: var(--gap-md);
+  padding-top: var(--gap-sm);
+  border-top: 2px solid var(--ink);
+}
+
+.gene-meta .kicker {
+  display: block;
+  margin-bottom: 0.4em;
+}
+
+.gene-meta-main .kicker:not(:first-child) { margin-top: 1.1rem; }
+
+.gene-source {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 1.75;
+  color: var(--ink-faint);
+}
+
+.gene-story {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  max-width: 40em;
+}
+
+.gene-meta-side { align-self: start; }
+
+/* 色板：一格格油墨方块 */
+.gene-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.15rem;
+}
+
+.gene-swatch {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 2px solid var(--ink);
+  background: var(--sw);
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.22);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-paper),
+    box-shadow var(--dur-fast) var(--ease-paper);
+}
+
+.gene-swatch:hover {
+  transform: translate(-2px, -2px) rotate(-3deg);
+  box-shadow: var(--lift);
+}
+
+.gene-swatch:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(34, 31, 26, 0.22);
+}
+
+/* 悬停弹出的色值小签（hex 存 data-hex，避免原生 title 二次弹提示） */
+.gene-swatch::after {
+  content: attr(data-hex);
+  position: absolute;
+  top: calc(100% + 5px);
+  left: -2px;
+  z-index: 5;
+  padding: 0.12em 0.38em;
+  background: var(--paper-card);
+  border: 1.5px solid var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: var(--ink);
+  opacity: 0;
+  transform: translateY(-3px);
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-paper),
+    transform var(--dur-fast) var(--ease-paper);
+}
+
+.gene-swatch:hover::after,
+.gene-swatch:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gene-palette-none {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+.gene-flash {
+  min-height: 1.3em;
+  margin: 0.75rem 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.1em;
+  color: var(--bamboo);
+}
+
+.gene-flash.is-err { color: var(--riso-red); }
+
+/* AI 成图：贴回来的样张 */
+.gene-ai { grid-column: 1 / -1; }
+.gene-ai:empty { display: none; }
+
+.gene-ai-fig {
+  position: relative;
+  max-width: 480px;
+  margin: 0.35rem 0 0;
+  padding: 10px;
+  background: var(--paper-deep);
+  border: 2px solid var(--ink);
+  box-shadow: var(--lift-strong);
+  transform: rotate(1.1deg);
+  animation: gene-fade 300ms var(--ease-paper) both;
+}
+
+.gene-ai-fig img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+}
+
+.gene-ai-fig figcaption {
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1.5px dashed var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+/* ---------------- 空态：纹样版待上机 ---------------- */
+.gene-empty {
+  position: relative;
+  margin: 0.4rem 0 var(--gap-sm);
+  padding: clamp(1.2rem, 4vw, 2rem);
+  background: var(--paper-card);
+  border: 2px dashed var(--ink);
+  box-shadow: var(--lift);
+  transform: rotate(-0.6deg);
+}
+
+.gene-empty-title {
+  margin: 0.3em 0 0.2em;
+  font-family: var(--font-serif);
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+  line-height: 1.3;
+}
+
+.gene-empty-sub {
+  margin: 0;
+  max-width: 34em;
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+}
+
+.gene-empty-bar {
+  height: 13px;
+  margin-top: var(--gap-sm);
+  opacity: 0.35;
+}
+
+/* ---------------- 焦点可见（整卡统一） —— */
+.gene-card :focus-visible {
+  outline: 2px dashed var(--riso-pink);
+  outline-offset: 3px;
+}
+
+/* ---------------- 动效：进场淡入（短、纸感） —— */
+@keyframes gene-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---------------- 响应式：375px 单列起可用 ---------------- */
+@media (max-width: 940px) {
+  .create-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .gene-tab {
+    flex: 1 1 auto;
+    justify-content: space-between;
+  }
+
+  .gene-frame {
+    padding: 8px;
+    transform: rotate(-0.5deg);
+  }
+
+  .gene-caption {
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .gene-actions .btn { flex: 1 1 100%; }
+
+  .gene-swatch { width: 32px; height: 32px; }
+}
+
+/* ---------------- 无障碍：尊重减少动效（卡片本体 + 全部后代） —— */
+@media (prefers-reduced-motion: reduce) {
+  .gene-card,
+  .gene-card *,
+  .gene-card *::before,
+  .gene-card *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

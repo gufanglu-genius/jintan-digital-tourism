@@ -1,0 +1,262 @@
+{
+  "genes": [
+    {
+      "id": "sanxingcun-pottery",
+      "name": "三星村陶纹",
+      "source": "三星村遗址（新石器时代，金坛区朱林镇）出土红褐陶器——绳纹、刻划纹、锯齿与漩涡纹等史前装饰语汇【中高置信：遗址与器物可靠，具体纹样类型需核对考古报告】",
+      "params": [
+        {
+          "key": "lineDensity",
+          "label": "线条密度",
+          "min": 0,
+          "max": 100,
+          "default": 45
+        },
+        {
+          "key": "jag",
+          "label": "齿纹锐度",
+          "min": 0,
+          "max": 100,
+          "default": 62
+        },
+        {
+          "key": "symmetry",
+          "label": "对称性",
+          "min": 0,
+          "max": 100,
+          "default": 30
+        },
+        {
+          "key": "curl",
+          "label": "卷曲率",
+          "min": 0,
+          "max": 100,
+          "default": 38
+        },
+        {
+          "key": "hueShift",
+          "label": "色相偏移",
+          "min": -30,
+          "max": 30,
+          "default": 0,
+          "unit": "deg"
+        }
+      ],
+      "palette": [
+        "#C15C3A",
+        "#8A3E28",
+        "#E3B98F",
+        "#6B4A38",
+        "#D9CBA8"
+      ],
+      "story": "六千年前，三星村先民用刻划与绳纹装饰陶器，锯齿与漩涡是他们对水与火的最初记录。这道纹样把太湖流域史前文明的指纹，交给Z世代的画笔重新刻写。"
+    },
+    {
+      "id": "jintan-papercut",
+      "name": "金坛刻纸",
+      "source": "金坛刻纸（国家级非遗，2008年作为「剪纸」扩展项目列入第二批国家级名录；2009年中国剪纸入选人类非物质文化遗产代表作名录；代表性传承人杨兆群）",
+      "params": [
+        {
+          "key": "cutDensity",
+          "label": "刀线密度",
+          "min": 0,
+          "max": 100,
+          "default": 60
+        },
+        {
+          "key": "sawtooth",
+          "label": "锯齿边",
+          "min": 0,
+          "max": 100,
+          "default": 55
+        },
+        {
+          "key": "mirrorAxes",
+          "label": "对称轴",
+          "min": 0,
+          "max": 8,
+          "default": 4,
+          "unit": "轴"
+        },
+        {
+          "key": "curl",
+          "label": "卷草曲率",
+          "min": 0,
+          "max": 100,
+          "default": 48
+        },
+        {
+          "key": "hueShift",
+          "label": "红色偏移",
+          "min": -15,
+          "max": 15,
+          "default": 0,
+          "unit": "deg"
+        }
+      ],
+      "palette": [
+        "#D8352A",
+        "#B31E1E",
+        "#F6EEDD",
+        "#E8B03C",
+        "#4A3A2E"
+      ],
+      "story": "以刀代剪，江南细刻。金坛刻纸早在隋唐已经出现，明清以来随庙会窗花风俗普及城乡，百米长卷《大运河》尽显纤巧刀功。今天，每一根朱红刀线都能在屏幕上被重新镂空、生长。"
+    },
+    {
+      "id": "maoshan-talisman",
+      "name": "茅山道教符箓色彩",
+      "source": "茅山道教符箓与斋醮科仪色彩（上清派祖庭；金坛侧乾元观道教音乐2009年列入江苏省级非遗，坤道仙乐团常演经典经韵）",
+      "params": [
+        {
+          "key": "strokeFlow",
+          "label": "笔势流度",
+          "min": 0,
+          "max": 100,
+          "default": 55
+        },
+        {
+          "key": "sealDensity",
+          "label": "符胆密度",
+          "min": 0,
+          "max": 100,
+          "default": 50
+        },
+        {
+          "key": "inkBleed",
+          "label": "墨韵扩散",
+          "min": 0,
+          "max": 100,
+          "default": 35
+        },
+        {
+          "key": "goldRatio",
+          "label": "鎏金比例",
+          "min": 0,
+          "max": 100,
+          "default": 25
+        },
+        {
+          "key": "hueShift",
+          "label": "符色偏移",
+          "min": -20,
+          "max": 20,
+          "default": 0,
+          "unit": "deg"
+        }
+      ],
+      "palette": [
+        "#EBC85C",
+        "#C33127",
+        "#1E2831",
+        "#B08437",
+        "#F5EAD2"
+      ],
+      "story": "黄裱为底，朱砂书符，玄墨收锋，鎏金点睛——符箓用色提炼自道教斋醮科仪传统。乾元观经韵犹在耳畔，神秘感被拆成可调参数，成为可生成的道家视觉语言。"
+    },
+    {
+      "id": "changdang-water",
+      "name": "长荡湖水纹",
+      "source": "长荡湖（古称洮湖，太湖流域湖西区浅水湖泊）的水面波纹、渔舟涟漪与放灯节倒影【中置信：湖名与位置可靠，纹样为艺术提炼】",
+      "params": [
+        {
+          "key": "waveDensity",
+          "label": "波纹密度",
+          "min": 0,
+          "max": 100,
+          "default": 40
+        },
+        {
+          "key": "rippleCurv",
+          "label": "波纹曲率",
+          "min": 0,
+          "max": 100,
+          "default": 58
+        },
+        {
+          "key": "reflectWidth",
+          "label": "反光带宽",
+          "min": 0,
+          "max": 100,
+          "default": 30
+        },
+        {
+          "key": "flowSpeed",
+          "label": "流动速度",
+          "min": 0,
+          "max": 100,
+          "default": 45
+        },
+        {
+          "key": "hueShift",
+          "label": "水色偏移",
+          "min": -25,
+          "max": 25,
+          "default": 0,
+          "unit": "deg"
+        }
+      ],
+      "palette": [
+        "#2C6E7F",
+        "#79B7AE",
+        "#1B4B57",
+        "#CBE6DF",
+        "#E2C489"
+      ],
+      "story": "古称洮湖的长荡湖，水面把江南的风揉成层层波纹。渔汛、蟹季、柚山放灯都在这片水上发生。青碧为底，夕照点金，每次生成都荡开一圈长荡湖的涟漪。"
+    },
+    {
+      "id": "zhixi-dragon",
+      "name": "直溪巨龙",
+      "source": "直溪巨龙（金坛区直溪镇巨村龙舞，国家级非遗：始于明代、已历六百余年，2011年作为「龙舞」扩展项目列入第三批国家级名录；民国初年改用竹篾扎架、外裹龙鳞状布皮与灯饰，龙身可达数十米，由七八人至近二十人协同舞动，巨村舞龙曾亮相《非遗里的中国》）",
+      "params": [
+        {
+          "key": "scaleDensity",
+          "label": "鳞片密度",
+          "min": 0,
+          "max": 100,
+          "default": 50
+        },
+        {
+          "key": "ribbonFlow",
+          "label": "彩带流度",
+          "min": 0,
+          "max": 100,
+          "default": 65
+        },
+        {
+          "key": "sparkle",
+          "label": "灯光闪烁度",
+          "min": 0,
+          "max": 100,
+          "default": 40
+        },
+        {
+          "key": "fringe",
+          "label": "流苏密度",
+          "min": 0,
+          "max": 100,
+          "default": 45
+        },
+        {
+          "key": "hueShift",
+          "label": "色相偏移",
+          "min": -20,
+          "max": 20,
+          "default": 0,
+          "unit": "deg"
+        }
+      ],
+      "palette": [
+        "#E23B2C",
+        "#F2B544",
+        "#2E8060",
+        "#F8EFD6",
+        "#7A1F1A"
+      ],
+      "story": "直溪镇巨村的巨龙，明代至今六百余年：竹篾为骨，外裹龙鳞状布皮，数十米龙身由近二十人协力舞动，是春节、元宵巡游的压轴节目。配色取朱红、暖金、翠绿的节庆精神——每次生成都舞出一段金坛龙文化的精气神。",
+      "lat": 31.8,
+      "lng": 119.43
+    }
+  ]
+}
