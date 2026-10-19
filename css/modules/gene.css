@@ -6,10 +6,10 @@
    全部取 tokens.css 令牌：无新色值、无圆角、无毛玻璃、无光晕
    ============================================================ */
 
-/* ---------------- 共创台两栏（左：基因编辑器 / 右：数字人） —— */
+/* ---------------- 共创台（基因编辑器通栏） —— */
 .create-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gap-md);
   align-items: start;
 }
@@ -77,7 +77,6 @@
 }
 
 .gene-tab:hover {
-  transform: translateY(-2px) rotate(0deg);
   box-shadow: var(--lift);
   background: var(--paper-deep);
 }
@@ -92,11 +91,12 @@
 .gene-tab[aria-pressed="true"] .tab-no { color: var(--riso-cyan); }
 .gene-tab[aria-pressed="true"] .tab-name { color: var(--paper); }
 
-/* ---------------- 工作区：画版 + 控制台（窄屏单列） —— */
+/* ---------------- 工作区：画版左 + 控制台右（窄屏单列） —— */
 .gene-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--gap-sm);
+  grid-template-columns: calc(480px + 26px) minmax(0, 1fr);
+  gap: var(--gap-md);
+  align-items: start;
 }
 
 /* 画版：像贴在纸上的版画 —— 纸边框 + 硬阴影 + 左上错位青版 */
@@ -181,13 +181,11 @@
 
 .gene-chip:hover,
 .gene-fold:hover {
-  transform: translate(-1px, -1px);
   box-shadow: var(--lift);
 }
 
 .gene-chip:active,
 .gene-fold:active {
-  transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 rgba(34, 31, 26, 0.2);
 }
 
@@ -246,7 +244,6 @@
 .gene-knob:nth-child(even) { transform: rotate(0.6deg); }
 
 .gene-knob:hover {
-  transform: rotate(0deg) translateY(-2px);
   box-shadow: var(--lift);
 }
 
@@ -492,12 +489,10 @@
 }
 
 .gene-swatch:hover {
-  transform: translate(-2px, -2px) rotate(-3deg);
   box-shadow: var(--lift);
 }
 
 .gene-swatch:active {
-  transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 rgba(34, 31, 26, 0.22);
 }
 
@@ -624,9 +619,11 @@
   to   { opacity: 1; }
 }
 
-/* ---------------- 响应式：375px 单列起可用 ---------------- */
+/* ---------------- 响应式：940px 以下工作区回单列 ---------------- */
 @media (max-width: 940px) {
   .create-grid { grid-template-columns: minmax(0, 1fr); }
+  .gene-body { grid-template-columns: minmax(0, 1fr); }
+  .gene-frame { max-width: 100%; margin-inline: auto; }
 }
 
 @media (max-width: 560px) {

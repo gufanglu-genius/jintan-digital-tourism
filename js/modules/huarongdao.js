@@ -7,9 +7,9 @@
 
 const SIZE = 4;
 const SHUFFLE = 120;          // 洗牌步数（随机游走，保证可解）
-const AUTO_MS = 300;          // 自动完成每步间隔
-const HINT_BUDGET = 1300;     // 提示求解时间预算（ms）
-const SOLVE_BUDGET = 2600;    // 自动完成求解时间预算（ms）
+const AUTO_MS = 120;          // 自动完成每步间隔（配合保底解路径，百步级也要十几秒内走完）
+const HINT_BUDGET = 1300;     // 提示求解时间预算（ms，仅保底路径意外丢失时兜底）
+const SOLVE_BUDGET = 2600;    // 自动完成求解时间预算（ms，同上兜底）
 const LS_KEY = 'jsws-hrd-v1';
 
 /* 前身项目图片（已压缩进 public/assets/hrd/），数据缺新图时兜底 */
@@ -49,6 +49,13 @@ function el(html) {
   t.innerHTML = html.trim();
   return t.content.firstElementChild;
 }
+
+/* 关卡字段（name/sub/artifact/winText/image）可能来自服务端回包，
+   走模板拼 HTML 前一律转义——map/chat 早有同款，这里此前是裸插 */
+const esc = (s) =>
+  String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+  );
 
 function reduceMotion() {
   return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -170,22 +177,24 @@ function makeBoard() {
     if (c < 3) out.push(idx + 1);
     return out;
   };
-  for (let i = 0; i < SHUFFLE; i++) {
-    let cand = nb(empty).filter((x) => x !== noGo);
-    if (!cand.length) cand = nb(empty);
-    const from = cand[(Math.random() * cand.length) | 0];
+  // 顺手记下每步走子前的空位：整个序列反过来就是一条必然成立的解
+  // （提示/自动完成直接吃这条保底解，不再依赖限时搜索——IDA* 在 120 步洗牌
+  //  面前 2.6s 预算经常超时，功能时灵时不灵）
+  const empties = [];
+  const step = (from) => {
+    empties.push(empty);
     b[empty] = b[from];
     b[from] = 0;
     noGo = empty;
     empty = from;
+  };
+  for (let i = 0; i < SHUFFLE; i++) {
+    let cand = nb(empty).filter((x) => x !== noGo);
+    if (!cand.length) cand = nb(empty);
+    step(cand[(Math.random() * cand.length) | 0]);
   }
-  if (isSolvedArr(b)) { // 极小概率：再走一步打散
-    const from = nb(b.indexOf(0))[0];
-    const e = b.indexOf(0);
-    b[e] = b[from];
-    b[from] = 0;
-  }
-  return b;
+  if (isSolvedArr(b)) step(nb(b.indexOf(0))[0]); // 极小概率：再走一步打散
+  return { b, rev: empties.slice().reverse() };
 }
 
 function isSolvedArr(b) {
@@ -281,6 +290,8 @@ function boot(container, data) {
     cur: -1,
     board: [],
     initial: [],
+    solPath: [],         // 保底解：依次要点的格子下标（applyMove 维护，见 applyMove）
+    initialSol: [],      // 开局时的保底解副本，重开时还原
     empty: 15,
     moves: 0,
     hints: 0,
@@ -296,6 +307,7 @@ function boot(container, data) {
     winTimer: null,
     busy: false,
     hintLock: false,
+    gen: 0,             // 局世代：每次开新局/重开 +1，作废在途的提示/自动完成回调
     tileEls: {},
     els: {},
     progress: loadProgress(),
@@ -330,8 +342,8 @@ function boot(container, data) {
   /* ---------- 菜单 ---------- */
   function renderMenu() {
     const strip = S.levels.map((lv, i) => `
-      <button type="button" class="hrd-strip-item" data-go="${i}" style="--i:${i}" aria-label="关卡 ${i + 1}　${lv.name}">
-        <img src="${lv.image}" alt="" loading="lazy">
+      <button type="button" class="hrd-strip-item" data-go="${i}" style="--i:${i}" aria-label="关卡 ${i + 1}　${esc(lv.name)}">
+        <img src="${esc(lv.image)}" alt="" loading="lazy">
         <span class="hrd-strip-no mono">${String(i + 1).padStart(2, '0')}</span>
       </button>`).join('');
 
@@ -370,14 +382,14 @@ function boot(container, data) {
         ? `<span class="hrd-lv-stars mono" aria-label="最佳 ${stars} 星">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span>`
         : '<span class="hrd-lv-stars mono hrd-lv-none">— — —</span>';
       return `
-      <button type="button" class="hrd-lv" data-go="${i}" style="--i:${i}" aria-label="进入关卡 ${i + 1}　${lv.name}">
-        <span class="hrd-lv-thumb"><img src="${lv.image}" alt="" loading="lazy"></span>
+      <button type="button" class="hrd-lv" data-go="${i}" style="--i:${i}" aria-label="进入关卡 ${i + 1}　${esc(lv.name)}">
+        <span class="hrd-lv-thumb"><img src="${esc(lv.image)}" alt="" loading="lazy"></span>
         <span class="hrd-lv-no mono">${String(i + 1).padStart(2, '0')}</span>
         ${p ? '<span class="stamp hrd-lv-done">通关</span>' : ''}
         <span class="hrd-lv-body">
-          <span class="hrd-lv-name">${lv.name}</span>
-          ${lv.sub ? `<span class="hrd-lv-sub">${lv.sub}</span>` : ''}
-          ${lv.artifact ? `<span class="hrd-lv-art mono">${lv.artifact}</span>` : ''}
+          <span class="hrd-lv-name">${esc(lv.name)}</span>
+          ${lv.sub ? `<span class="hrd-lv-sub">${esc(lv.sub)}</span>` : ''}
+          ${lv.artifact ? `<span class="hrd-lv-art mono">${esc(lv.artifact)}</span>` : ''}
         </span>
         ${starHtml}
       </button>`;
@@ -414,10 +426,10 @@ function boot(container, data) {
           <button type="button" class="btn ghost" data-act="back">← 返回</button>
           <div class="hrd-play-title">
             <p class="kicker">LEVEL ${String(S.cur + 1).padStart(2, '0')} / ${String(S.levels.length).padStart(2, '0')}</p>
-            <h3>${lv.name}</h3>
-            ${lv.sub ? `<p class="hrd-play-sub">${lv.sub}</p>` : ''}
+            <h3>${esc(lv.name)}</h3>
+            ${lv.sub ? `<p class="hrd-play-sub">${esc(lv.sub)}</p>` : ''}
           </div>
-          ${showArt ? `<span class="stamp hrd-art">${lv.artifact}</span>` : ''}
+          ${showArt ? `<span class="stamp hrd-art">${esc(lv.artifact)}</span>` : ''}
         </div>
 
         <div class="hrd-play-grid">
@@ -443,7 +455,7 @@ function boot(container, data) {
               <button type="button" class="btn ghost" data-act="restart">重开</button>
               ${showGen ? '<button type="button" class="btn ghost" data-act="gen">生成配图</button>' : ''}
             </div>
-            <p class="hrd-side-note kicker">拖动、提示与自动完成均由 IDA* 在本地推演，不联网。</p>
+            <p class="hrd-side-note kicker">提示与自动完成在本地推演（保底解路径，IDA* 兜底），不联网。</p>
             <div class="hrd-sr" aria-live="polite" data-st="sr"></div>
           </aside>
         </div>
@@ -554,6 +566,10 @@ function boot(container, data) {
     const er = e >> 2, ec = e & 3;
     const fr = from >> 2, fc = from & 3;
     if (Math.abs(fr - er) + Math.abs(fc - ec) !== 1) return false;
+    // 维护保底解：正沿解走 → 收一步；另起炉灶 → 把「退回这步」顶到队首，
+    // 不变量恒成立——solPath 从当前盘面一定能走回终局
+    if (S.solPath.length && S.solPath[0] === from) S.solPath.shift();
+    else S.solPath.unshift(e);
     const v = S.board[from];
     S.board[e] = v;
     S.board[from] = 0;
@@ -610,10 +626,14 @@ function boot(container, data) {
   function startLevel(i) {
     stopAuto();
     clearTimeout(S.winTimer);
+    S.gen++;                     // 新局开始，在途的提示/自动完成回调全部作废
     S.cur = i;
     S.lv = S.levels[i];
-    S.board = makeBoard();
+    const mk = makeBoard();
+    S.board = mk.b;
     S.initial = S.board.slice();
+    S.initialSol = mk.rev.slice();
+    S.solPath = mk.rev.slice();
     S.empty = S.board.indexOf(0);
     S.moves = 0;
     S.hints = 0;
@@ -627,17 +647,22 @@ function boot(container, data) {
   }
 
   function restart() {
-    if (S.state !== 'play') return;
+    // 通关浮层里点「再玩一次」时 S.state === 'win'——原先只认 play，按钮直接失灵
+    if (S.state !== 'play' && S.state !== 'win') return;
     stopAuto();
     clearTimeout(S.winTimer);
     clearWin();
+    S.gen++;                     // 换了盘面，在途回调作废
     S.board = S.initial.slice();
+    S.solPath = S.initialSol.slice(); // 盘面回卷，保底解也回到开局那份
     S.empty = S.board.indexOf(0);
     S.moves = 0;
     S.hints = 0;
     S.autoUsed = false;
     S.won = false;
     S.elapsedMs = 0;
+    S.busy = false;
+    S.hintLock = false;
     S.state = 'play';
     container.dataset.state = 'play';
     for (let i = 0; i < S.board.length; i++) {
@@ -657,18 +682,31 @@ function boot(container, data) {
     if (S.state !== 'play' || S.auto || S.busy || S.won || S.hintLock) return;
     if (isSolvedArr(S.board)) return;
     const btn = S.els.hint;
+    const gen = S.gen;          // 点击瞬间的局世代；回调里对不上就整体作废
     S.hintLock = true;
     S.busy = true;
     btn.disabled = true;
     btn.textContent = '推演中…';
     setTimeout(() => {
-      const sol = solveBoard(S.board, S.empty, HINT_BUDGET);
+      if (gen !== S.gen || S.state !== 'play') {
+        // 这 30ms 里被重开/换关：只还原按钮，绝不碰（可能已经是新的）盘面
+        btn.textContent = '提示';
+        btn.disabled = false;
+        S.busy = false;
+        S.hintLock = false;
+        return;
+      }
+      // 保底解路径恒成立、零耗时；IDA* 只在路径意外丢失时兜底
+      let from = S.solPath[0];
+      if (from == null) {
+        const sol = solveBoard(S.board, S.empty, HINT_BUDGET);
+        from = sol && sol.length ? sol[0] : null;
+      }
       btn.textContent = '提示';
       btn.disabled = false;
       S.busy = false;
       setTimeout(() => { S.hintLock = false; }, 700);
-      if (!sol || !sol.length) { toast('这一局推演较慢，稍后再试'); return; }
-      const from = sol[0];
+      if (from == null) { toast('这一局推演较慢，稍后再试'); return; }
       const v = S.board[from];
       S.hints++;
       const t = S.tileEls[v];
@@ -687,14 +725,25 @@ function boot(container, data) {
     if (S.auto) { stopAuto(); toast('已暂停'); return; }
     if (isSolvedArr(S.board)) return;
     const btn = S.els.auto;
+    const gen = S.gen;
     S.busy = true;
     btn.disabled = true;
     btn.textContent = '推演中…';
     setTimeout(() => {
-      const sol = solveBoard(S.board, S.empty, SOLVE_BUDGET);
+      if (gen !== S.gen || S.state !== 'play') {
+        // 同 doHint：作废在途求解，还原按钮，不碰新盘
+        btn.textContent = '自动完成';
+        btn.disabled = false;
+        btn.classList.remove('hrd-btn-on');
+        S.busy = false;
+        return;
+      }
+      // 保底解快照：零搜索、必然成立（IDA* 只兜底路径丢失的极端情况）
+      let sol = S.solPath.filter((p) => Number.isInteger(p));
+      if (!sol.length) sol = solveBoard(S.board, S.empty, SOLVE_BUDGET) || [];
       btn.disabled = false;
       S.busy = false;
-      if (!sol || !sol.length) { btn.textContent = '自动完成'; toast('这一局推演较慢，稍后再试'); return; }
+      if (!sol.length) { btn.textContent = '自动完成'; toast('推演失败，重开一局试试'); return; }
       S.autoUsed = true;
       S.auto = true;
       S.autoSol = sol;
@@ -752,6 +801,8 @@ function boot(container, data) {
 
   function showWin() {
     if (S.state !== 'play' || S.won) return;
+    // 280ms 宽限期内还能走子：弹层前重验盘面，防止把没拼完的局判成通关
+    if (!isSolvedArr(S.board)) return;
     S.won = true;
     stopAuto();
     stopTimer();
@@ -771,22 +822,22 @@ function boot(container, data) {
       <div class="hrd-win" role="dialog" aria-modal="true" aria-label="通关">
         <div class="hrd-win-card">
           <span class="tape" style="top:-13px; left:8%; transform:rotate(-5deg);"></span>
-          <div class="hrd-win-img"><img src="${lv.image}" alt=""></div>
+          <div class="hrd-win-img"><img src="${esc(lv.image)}" alt=""></div>
           <div class="hrd-win-body">
             <div class="hrd-win-head">
               <span class="stamp">通关</span>
               <div>
-                <h3>${lv.name}</h3>
-                ${lv.sub ? `<p class="hrd-win-sub">${lv.sub}</p>` : ''}
+                <h3>${esc(lv.name)}</h3>
+                ${lv.sub ? `<p class="hrd-win-sub">${esc(lv.sub)}</p>` : ''}
               </div>
             </div>
-            ${lv.artifact ? `<p class="hrd-win-art mono">宝物 · ${lv.artifact}</p>` : ''}
+            ${lv.artifact ? `<p class="hrd-win-art mono">宝物 · ${esc(lv.artifact)}</p>` : ''}
             <div class="hrd-win-stats mono">
               <span>步数 <b>${S.moves}</b></span>
               <span>用时 <b>${fmtTime(S.elapsedMs)}</b></span>
               <span class="hrd-star-on">${'★'.repeat(stars)}</span><span>${'☆'.repeat(3 - stars)}</span>
             </div>
-            ${lv.winText ? `<p class="hrd-win-text">${lv.winText}</p>` : ''}
+            ${lv.winText ? `<p class="hrd-win-text">${esc(lv.winText)}</p>` : ''}
             <div class="hrd-win-btns">
               ${hasNext ? '<button type="button" class="btn primary" data-act="next">下一关</button>' : ''}
               <button type="button" class="btn" data-act="again">再玩一次</button>
@@ -893,7 +944,7 @@ function boot(container, data) {
   function toast(msg) {
     if (toastEl) { toastEl.remove(); toastEl = null; }
     clearTimeout(toastTimer);
-    toastEl = el(`<div class="hrd-toast" role="status">${msg}</div>`);
+    toastEl = el(`<div class="hrd-toast" role="status">${esc(msg)}</div>`);
     root.appendChild(toastEl);
     toastTimer = setTimeout(() => { if (toastEl) { toastEl.remove(); toastEl = null; } }, 2400);
   }

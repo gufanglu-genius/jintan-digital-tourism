@@ -17,6 +17,44 @@ const CAT_INK = {
 /* ---- 默认视野：金坛区 31.72N 119.57E zoom 11 ---- */
 const HOME = { lat: 31.72, lng: 119.57, zoom: 11 };
 
+/* ---- 研学动线：四站按叙事顺序（考古→道文化→渔俗→夜游） ---- */
+const ROUTE_NAMES = ['三星村遗址', '茅山', '长荡湖', '东方盐湖城·道天下'];
+
+/* ---- 打卡集章：localStorage 持久化 ---- */
+const STAMP_KEY = 'shuxu.stamps';
+
+function loadStamps(len) {
+  const set = new Set();
+  try {
+    const raw = localStorage.getItem(STAMP_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(arr)) {
+      arr.forEach((x) => {
+        const n = Number(x);
+        if (Number.isInteger(n) && n >= 0 && n < len) set.add(n);
+      });
+    }
+  } catch {
+    /* 隐私模式下静默降级：本次会话仍可打卡，只是不跨刷新 */
+  }
+  return set;
+}
+
+function saveStamps(st) {
+  try {
+    localStorage.setItem(STAMP_KEY, JSON.stringify([...st.stamped]));
+  } catch {
+    /* 同上 */
+  }
+}
+
+function routeIdxOf(pts) {
+  return ROUTE_NAMES.map((name) => {
+    const p = pts.find((x) => x.name === name);
+    return p && hasXY(p) ? p.i : -1;
+  }).filter((i) => i >= 0);
+}
+
 /* ---- 小工具 ---- */
 const esc = (s) =>
   String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
@@ -114,7 +152,7 @@ function buildDOM(st) {
   side.insertAdjacentHTML(
     'beforeend',
     `<div class="map-detail" aria-live="polite" hidden></div>` +
-    `<div class="map-index-head mono"><span>索引 INDEX</span><span class="map-idx-count"></span></div>` +
+    `<div class="map-index-head mono"><span>索引 INDEX</span><span class="map-stamp-count"></span><span class="map-idx-count"></span></div>` +
     `<ol class="map-list"></ol>`
   );
 
@@ -129,6 +167,7 @@ function buildDOM(st) {
     detail: side.querySelector('.map-detail'),
     list: side.querySelector('.map-list'),
     count: side.querySelector('.map-idx-count'),
+    stampCount: side.querySelector('.map-stamp-count'),
   };
 }
 
@@ -143,6 +182,11 @@ function wire(st) {
       renderDetail(st);
       syncActive(st);
       st.dom.side.scrollTop = 0;
+      return;
+    }
+    const stampBtn = e.target.closest('[data-act="stamp"]');
+    if (stampBtn) {
+      toggleStamp(st);
       return;
     }
     const el = e.target.closest('[data-pt]');
@@ -180,6 +224,29 @@ function pick(st, i, pan) {
   syncActive(st);
   st.dom.side.scrollTop = 0;
   if (pan) focus(st, p);
+  unstack(st, i);
+}
+
+/* 城区六处真坐标只差几百米，默认视野下图钉叠成一摞、上层钉总挡住下层。
+   点中重叠钉就地放大到能分开的层级（盖住的钉自己冒出来可点）；索引列表始终是兜底路。 */
+function unstack(st, i) {
+  if (!st.map || !st.L) return;
+  const p = st.pts[i];
+  if (!hasXY(p)) return;
+  const here = st.map.latLngToContainerPoint([p.lat, p.lng]);
+  let near = 0;
+  st.markers.forEach((m, k) => {
+    if (!m || k === i || !st.map.hasLayer(m)) return;
+    const q = st.pts[k];
+    if (!hasXY(q)) return;
+    const pt = st.map.latLngToContainerPoint([q.lat, q.lng]);
+    if (pt.distanceTo(here) < 36) near++;
+  });
+  if (!near) return;
+  // 46px 宽的图钉要真正分开需要 ~z16；已在 z15+ 就不再跳，交给 riseOnHover
+  const z = st.map.getZoom();
+  if (z >= 15) return;
+  st.map.setView([p.lat, p.lng], Math.min(16, z + 3), { animate: !reduced() });
 }
 
 function focus(st, p) {
@@ -193,19 +260,57 @@ function focus(st, p) {
 function setCat(st, cat) {
   st.cat = cat;
   const pts = st.pts;
-  if (st.selected != null && cat !== '*' && pts[st.selected].category !== cat) {
-    st.selected = null;
-    renderDetail(st);
+  if (st.selected != null) {
+    const keep =
+      cat === '*'
+        ? true
+        : cat === 'route'
+        ? st.routeIdx.includes(st.selected)
+        : pts[st.selected].category === cat;
+    if (!keep) {
+      st.selected = null;
+      renderDetail(st);
+    }
   }
   renderChips(st);
   renderList(st);
   applyMarkers(st);
+  if (cat === 'route') fitRoute(st);
   if (st.fallbackOn) renderFallback(st);
   syncActive(st);
 }
 
 function visible(st) {
+  if (st.cat === 'route') return st.routeIdx.map((i) => st.pts[i]).filter(Boolean);
   return st.pts.filter((p) => st.cat === '*' || p.category === st.cat);
+}
+
+/* 四站动线：视野收拢到动线上（只在动线筛选时调用） */
+function fitRoute(st) {
+  if (!st.map || !st.L || st.routeIdx.length < 2) return;
+  const xy = st.routeIdx.map((i) => st.pts[i]).filter(hasXY);
+  if (xy.length < 2) return;
+  st.map.fitBounds(st.L.latLngBounds(xy.map((p) => [p.lat, p.lng])), {
+    padding: [52, 52],
+    maxZoom: 12,
+    animate: !reduced(),
+  });
+}
+
+/* —— 打卡（盖章可撤销，落章时给一帧回弹） —— */
+function toggleStamp(st) {
+  if (st.selected == null) return;
+  const i = st.selected;
+  if (st.stamped.has(i)) st.stamped.delete(i);
+  else st.stamped.add(i);
+  saveStamps(st);
+  renderDetail(st, true);
+  renderList(st);
+}
+
+function updateStampCount(st) {
+  if (!st.dom.stampCount) return;
+  st.dom.stampCount.textContent = `已打卡 ${st.stamped.size} / ${st.pts.length}`;
 }
 
 /* ============================================================
@@ -216,7 +321,11 @@ function renderChips(st) {
   if (!box) return;
   const cats = catsOf(st.pts);
   const total = st.pts.length;
+  const routeOn = st.cat === 'route';
+  const routeChip =
+    `<button type="button" class="map-chip map-chip-route${routeOn ? ' is-on' : ''}" data-cat="route" aria-pressed="${routeOn}" style="--c:var(--riso-red)"><i></i>研学动线<em>${st.routeIdx.length}</em></button>`;
   const chips = [`<button type="button" class="map-chip${st.cat === '*' ? ' is-on' : ''}" data-cat="*" aria-pressed="${st.cat === '*'}">全部<em>${total}</em></button>`]
+    .concat([routeChip])
     .concat(
       cats.map(({ c, n }) => {
         const on = st.cat === c;
@@ -254,6 +363,7 @@ function renderList(st) {
   const rows = visible(st);
   const total = st.pts.length;
   st.dom.count.textContent = rows.length === total ? `${total} 处` : `${rows.length} / ${total}`;
+  updateStampCount(st);
 
   if (!rows.length) {
     st.dom.list.innerHTML = `<li class="map-empty mono">${total ? '此分类下暂无点位' : '暂无点位数据'}</li>`;
@@ -267,6 +377,7 @@ function renderList(st) {
         `<span class="mr-meta mono"><i class="mr-dot" style="--c:${inkOf(p.category)}"></i>${esc(p.category)}` +
         (p.level ? ` · ${esc(p.level)}` : '') +
         (hasXY(p) ? '' : `<b class="mr-flag">无坐标</b>`) +
+        (st.stamped.has(p.i) ? `<b class="mr-stamp">已打卡</b>` : '') +
         `</span>` +
         `</button></li>`
     )
@@ -276,7 +387,7 @@ function renderList(st) {
 /* ============================================================
    渲染 · 详情
    ============================================================ */
-function renderDetail(st) {
+function renderDetail(st, justStamped) {
   const box = st.dom.detail;
   const empty = st.dom.empty;
   const p = st.selected == null ? null : st.pts[st.selected];
@@ -289,6 +400,7 @@ function renderDetail(st) {
   }
   box.hidden = false;
   if (empty) empty.hidden = true;
+  const stamped = st.stamped.has(p.i);
 
   box.innerHTML =
     `<article class="md">` +
@@ -301,6 +413,12 @@ function renderDetail(st) {
     (p.playTip
       ? `<div class="md-tip"><span class="kicker">玩法 TIP</span><p>${esc(p.playTip)}</p></div>`
       : '') +
+    `<div class="md-stamp-row">` +
+    `<button type="button" class="md-stamp-btn${stamped ? ' is-on' : ''}${
+      justStamped ? ' is-new' : ''
+    }" data-act="stamp">${stamped ? '已打卡 · 撤销' : '盖章打卡'}</button>` +
+    `<span class="md-stamp-note mono">已集章 ${st.stamped.size} / ${st.pts.length}</span>` +
+    `</div>` +
     `<p class="md-coord mono">${hasXY(p) ? fmtCoord(p) : '坐标未标定 · 仅收录于索引'}</p>` +
     `</article>`;
 }
@@ -330,11 +448,62 @@ function applyMarkers(st) {
   st.pts.forEach((p, i) => {
     const m = st.markers[i];
     if (!m) return;
-    const want = st.cat === '*' || p.category === st.cat;
+    const want =
+      st.cat === '*'
+        ? true
+        : st.cat === 'route'
+        ? st.routeIdx.includes(i)
+        : p.category === st.cat;
     const on = st.map.hasLayer(m);
     if (want && !on) st.map.addLayer(m);
     if (!want && on) st.map.removeLayer(m);
   });
+  updateRouteLine(st);
+}
+
+/* ============================================================
+   研学动线：四站之间连一条手绘感虚线（带确定性微抖动）
+   ============================================================ */
+function routeLatLngs(st) {
+  const pts = st.routeIdx.map((i) => st.pts[i]).filter((p) => p && hasXY(p));
+  const out = [];
+  const wob = [0.0035, -0.0028, 0.0022, -0.0031, 0.0026];
+  pts.forEach((p, k) => {
+    if (k) {
+      const prev = pts[k - 1];
+      for (let s = 1; s <= 3; s++) {
+        const t = s / 4;
+        const w = wob[(k * 3 + s) % wob.length];
+        out.push([
+          prev.lat + (p.lat - prev.lat) * t + w,
+          prev.lng + (p.lng - prev.lng) * t - w * 0.6,
+        ]);
+      }
+    }
+    out.push([p.lat, p.lng]);
+  });
+  return out;
+}
+
+function updateRouteLine(st) {
+  if (!st.map || !st.L) return;
+  if (st.routeLine) {
+    st.map.removeLayer(st.routeLine);
+    st.routeLine = null;
+  }
+  if (st.cat !== 'route') return;
+  const latlngs = routeLatLngs(st);
+  if (latlngs.length < 2) return;
+  st.routeLine = st.L.polyline(latlngs, {
+    color: '#e8452b',
+    weight: 3,
+    opacity: 0.92,
+    dashArray: '10 8',
+    lineCap: 'round',
+    lineJoin: 'round',
+    className: 'mk-route',
+    interactive: false,
+  }).addTo(st.map);
 }
 
 /* ============================================================
@@ -474,9 +643,15 @@ function renderFallback(st) {
     return;
   }
   const pos = project(rows);
+  const routeSvg =
+    st.cat === 'route' && pos.length > 1
+      ? `<svg class="map-route-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">` +
+        `<polyline points="${pos.map((q) => `${q.x.toFixed(2)},${q.y.toFixed(2)}`).join(' ')}" vector-effect="non-scaling-stroke"/></svg>`
+      : '';
   fb.innerHTML =
     `<p class="map-fb-note mono">底图离线 · 以下按经纬度示意，可点击</p>` +
     `<div class="map-plot">` +
+    routeSvg +
     rows.map((p, k) => `<span class="mk-pin" style="left:${pos[k].x.toFixed(2)}%;top:${pos[k].y.toFixed(2)}%">${markerHTML(p)}</span>`).join('') +
     `</div>`;
 }
@@ -504,7 +679,10 @@ export function initMap(container, data) {
   const st = container.__mapState;
   if (st) {
     st.pts = pts;
-    if (st.cat !== '*' && !pts.some((p) => p.category === st.cat)) st.cat = '*';
+    st.routeIdx = routeIdxOf(pts);
+    st.stamped = loadStamps(pts.length);
+    if (st.cat === 'route' && st.routeIdx.length === 0) st.cat = '*';
+    if (st.cat !== '*' && st.cat !== 'route' && !pts.some((p) => p.category === st.cat)) st.cat = '*';
     if (st.selected != null && st.selected >= pts.length) st.selected = null;
     // 地图已挂载 → 按新数据重建图钉并重落视野（幂等：旧层先撤）
     if (st.map) { buildMarkers(st); fitToData(st); }
@@ -522,6 +700,9 @@ export function initMap(container, data) {
     L: null,
     markers: [],
     fallbackOn: false,
+    stamped: loadStamps(pts.length),
+    routeIdx: routeIdxOf(pts),
+    routeLine: null,
     dom: null,
   };
   container.__mapState = fresh;

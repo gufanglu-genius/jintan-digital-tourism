@@ -174,7 +174,6 @@
 }
 
 .mk:hover .mk-tag {
-  transform: rotate(0deg) translateY(-2px);
   box-shadow: 3px 3px 0 var(--ink);
 }
 
@@ -283,6 +282,28 @@
   transform: translate(-50%, -100%);
 }
 
+/* 离线坐标图上的研学动线 */
+.map-route-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.map-route-svg polyline {
+  fill: none;
+  stroke: var(--riso-red);
+  stroke-width: 2.5;
+  stroke-dasharray: 8 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+/* Leaflet 上的研学动线（手绘感虚线） */
+.mk-route { stroke-linecap: round; stroke-linejoin: round; }
+
 /* ============================================================
    索引侧栏
    ============================================================ */
@@ -353,7 +374,6 @@
 .map-back:hover {
   background: var(--ink);
   color: var(--paper);
-  transform: translate(-1px, -1px) rotate(-1.5deg);
 }
 .map-back:focus-visible { outline: 2px solid var(--riso-pink); outline-offset: 2px; }
 
@@ -416,6 +436,46 @@
   color: var(--ink-faint);
 }
 
+/* —— 打卡盖章 —— */
+.md-stamp-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 0.85em;
+}
+.md-stamp-btn {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  padding: 0.45em 0.8em 0.4em;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.18);
+  transition: box-shadow var(--dur-fast) var(--ease-paper), background var(--dur-fast), color var(--dur-fast);
+}
+.md-stamp-btn:hover { box-shadow: 4px 4px 0 rgba(34, 31, 26, 0.24); }
+.md-stamp-btn:focus-visible { outline: 2px solid var(--riso-pink); outline-offset: 2px; }
+.md-stamp-btn.is-on {
+  background: var(--riso-red);
+  border-color: var(--riso-red);
+  color: var(--paper);
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.28);
+}
+.md-stamp-btn.is-new { animation: stampHit 380ms var(--ease-paper) both; }
+@keyframes stampHit {
+  0%   { transform: rotate(-14deg) scale(1.2); }
+  60%  { transform: rotate(2deg) scale(0.97); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+.md-stamp-note {
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
 /* —— 索引表 —— */
 .map-index-head {
   display: flex;
@@ -429,6 +489,7 @@
   margin-bottom: 9px;
 }
 .map-idx-count { color: var(--riso-red); }
+.map-stamp-count { color: var(--riso-red); }
 
 .map-list {
   list-style: none;
@@ -462,10 +523,9 @@
 }
 .map-row:hover {
   background: var(--paper-card);
-  transform: translate(-2px, -2px) rotate(-0.6deg);
   box-shadow: 4px 4px 0 rgba(34, 31, 26, 0.24);
 }
-.map-row:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(34, 31, 26, 0.2); }
+.map-row:active { box-shadow: 1px 1px 0 rgba(34, 31, 26, 0.2); }
 .map-row:focus-visible { outline: 2px solid var(--riso-pink); outline-offset: 2px; }
 
 .map-row.is-active {
@@ -512,6 +572,14 @@
 .mr-flag {
   font-weight: 400;
   border: 1px solid rgba(232, 69, 43, 0.6);
+  color: var(--riso-red);
+  padding: 0 4px;
+  letter-spacing: 0.08em;
+}
+.mr-stamp {
+  margin-left: auto;
+  font-weight: 400;
+  border: 1px solid var(--riso-red);
   color: var(--riso-red);
   padding: 0 4px;
   letter-spacing: 0.08em;
@@ -565,7 +633,7 @@
   transition: transform var(--dur-fast) var(--ease-paper), box-shadow var(--dur-fast) var(--ease-paper), background var(--dur-fast), color var(--dur-fast);
 }
 .map-chip:nth-child(even) { transform: rotate(1.1deg); }
-.map-chip:hover { transform: translate(-1px, -1px) rotate(0deg); box-shadow: 4px 4px 0 rgba(34, 31, 26, 0.22); }
+.map-chip:hover { box-shadow: 4px 4px 0 rgba(34, 31, 26, 0.22); }
 .map-chip:focus-visible { outline: 2px solid var(--riso-pink); outline-offset: 2px; }
 
 .map-chip i {
@@ -586,6 +654,9 @@
   box-shadow: 3px 3px 0 var(--c, var(--riso-red));
 }
 .map-chip.is-on em { color: rgba(232, 224, 192, 0.7); }
+
+/* 研学动线 chip：虚线边框自带「行军路线」语义 */
+.map-chip-route { border-style: dashed; }
 
 .mf-count {
   margin-left: auto;
@@ -623,5 +694,6 @@
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
   .md, .map-list > li { animation: none; }
-  .map-row, .map-chip, .mk-tag, .mk-name, .map-back { transition: none; }
+  .map-row, .map-chip, .mk-tag, .mk-name, .map-back, .md-stamp-btn { transition: none; }
+  .md-stamp-btn.is-new { animation: none; }
 }

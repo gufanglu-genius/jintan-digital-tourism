@@ -10,6 +10,14 @@ const KEY = 'shuxu.quiz';
 const VER = 1;
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
+/* 研学环四大资源：成绩单按此盖「研学环·毕营」章（与地图四站动线同序） */
+const RES_ORDER = [
+  { name: '三星村', topics: ['三星村遗址'] },
+  { name: '茅山', topics: ['茅山道教文化'] },
+  { name: '长荡湖', topics: ['长荡湖/风物'] },
+  { name: '盐湖城', topics: ['东方盐湖城'] },
+];
+
 /* ---------------- 工具 ---------------- */
 const esc = (s) =>
   String(s).replace(
@@ -129,6 +137,7 @@ export function initQuiz(pane, data) {
 
   let pending = null;      // 已勾选、尚未「提交」的纸条
   let swapTimer = 0;
+  let swapTarget = null;   // 换题动画进行中的目标题号：state.cur 要 160ms 后才落，期间以它为准
   let shakeTimer = 0;
 
   pane.dataset.module = 'quiz';
@@ -286,6 +295,39 @@ export function initQuiz(pane, data) {
       )
       .join('');
 
+    /* —— 研学环：四大资源逐题掌握 + 毕营章 —— */
+    const resRows = RES_ORDER.map((r) => {
+      const posList = [];
+      state.order.forEach((qi, pos) => {
+        if (r.topics.includes(questions[qi].topic)) posList.push(pos);
+      });
+      let okCount = 0;
+      const boxes = posList
+        .map((pos) => {
+          const good = state.picks[pos] === questions[state.order[pos]].answer;
+          if (good) okCount++;
+          return `<span class="mbox ${good ? 'ok' : 'no'}" title="第 ${pos + 1} 题"></span>`;
+        })
+        .join('');
+      return {
+        name: r.name,
+        boxes,
+        frac: `${okCount}/${posList.length}`,
+        ok: posList.length > 0 && okCount === posList.length,
+      };
+    });
+    const allRes = resRows.every((r) => r.ok);
+    const resHTML = resRows
+      .map(
+        (r) => `
+        <div class="mrow">
+          <span class="mname mono">${esc(r.name)}</span>
+          <span class="mboxes">${r.boxes}</span>
+          <span class="mfrac mono">${r.frac}</span>
+        </div>`
+      )
+      .join('');
+
     return `
       <article class="quiz-card quiz-result" tabindex="-1">
         <span class="tape" style="top:-13px; left:10%; transform:rotate(5deg);"></span>
@@ -303,10 +345,20 @@ export function initQuiz(pane, data) {
               <span class="score-den mono">/ ${n}</span>
             </div>
             <span class="stamp quiz-done-stamp">完卷</span>
+            ${allRes ? '<span class="stamp quiz-ys-stamp">研学环·毕营</span>' : ''}
           </div>
           <div class="quiz-mastery">
             <span class="kicker">按主题掌握格 · MASTERY</span>
-            ${rows}
+            <div class="quiz-topic-rows">${rows}</div>
+            <div class="quiz-yanxue">
+              <span class="kicker">四大资源 · 研学环</span>
+              ${resHTML}
+              <p class="quiz-yx-hint mono">${
+                allRes
+                  ? '四大资源全数通关 · 毕营章已盖'
+                  : '四大资源题全部答对，即盖「研学环·毕营」章'
+              }</p>
+            </div>
             <div class="mlegend mono"><i class="mbox ok"></i>已掌握<i class="mbox no"></i>需巩固</div>
           </div>
         </div>
@@ -346,7 +398,9 @@ export function initQuiz(pane, data) {
   function swapTo(pos) {
     if (pos < 0 || pos >= n) return;
     pending = null;
+    swapTarget = pos;
     const apply = () => {
+      swapTarget = null;
       state.cur = pos;
       writeState(state);
       renderHead();
@@ -364,15 +418,22 @@ export function initQuiz(pane, data) {
   }
 
   function go(delta) {
-    const target = state.cur + delta;
+    // 160ms 翻页窗口内 state.cur 还是旧值：以 swapTarget 为当前题，
+    // 连点「下一题」才会一题题走（已答的连跳），而不是反复算同一个 target
+    const base = swapTarget !== null ? swapTarget : state.cur;
+    const target = base + delta;
     if (target < 0 || target >= n) return;
-    if (delta > 0 && state.picks[state.cur] === undefined) return;
+    if (delta > 0 && state.picks[base] === undefined) return;
     swapTo(target);
   }
 
   function advance() {
-    if (state.picks[state.cur] === undefined) return;
-    if (state.cur >= n - 1) {
+    const base = swapTarget !== null ? swapTarget : state.cur;
+    if (state.picks[base] === undefined) return;
+    if (base >= n - 1) {
+      // 抢在在途翻页动画前收卷：不清的话 160ms 后的 apply 会把成绩页盖掉
+      window.clearTimeout(swapTimer);
+      swapTarget = null;
       state.done = true;
       pending = null;
       writeState(state);
@@ -381,7 +442,7 @@ export function initQuiz(pane, data) {
       focusCard();
       return;
     }
-    go(1);
+    swapTo(base + 1);
   }
 
   /* —— 勾选纸条（两步：勾选 → 提交） —— */
@@ -496,6 +557,9 @@ export function initQuiz(pane, data) {
         else if (act === 'next') advance();
         else if (act === 'back') go(-1);
         else if (act === 'restart') restart();
+        // 题号圆点：上面 preventDefault 已吞掉原生点击，这里补一次，
+        // 否则 Tab 到圆点按 Enter 毫无反应（Space 倒是能走）
+        else if (ae.dataset.dot !== undefined) ae.click();
         return;
       }
 

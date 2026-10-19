@@ -6,10 +6,16 @@ import { initHuarongdao } from './modules/huarongdao.js';
 import { initYaji } from './modules/yaji.js';
 import { initQuiz } from './modules/quiz.js';
 import { initGene } from './modules/gene.js';
-import { initHuman } from './modules/human.js';
 import { initSpace } from './modules/space.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
+
+/* 文案字段走模板拼 HTML 前一律转义——story.json 若被改动/联调注入，
+   裸插会直接开 XSS 口子（modules 里每个拼 HTML 的模块早已有同款） */
+const esc = (s) =>
+  String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+  );
 
 async function loadJSON(name) {
   try {
@@ -31,7 +37,7 @@ function paintStory(story) {
   const nav = $('#navLinks');
   if (Array.isArray(story.nav)) {
     nav.innerHTML = story.nav
-      .map((n) => `<li><a href="#${n.id}">${n.label}</a></li>`)
+      .map((n) => `<li><a href="#${esc(n.id)}">${esc(n.label)}</a></li>`)
       .join('');
   }
 
@@ -41,9 +47,9 @@ function paintStory(story) {
       .map(
         (a, i) => `
       <article class="act reveal" style="--act-i:${i}">
-        <span class="act-kicker kicker">${a.kicker}</span>
-        <h3>${a.title}</h3>
-        <p>${a.body}</p>
+        <span class="act-kicker kicker">${esc(a.kicker)}</span>
+        <h3>${esc(a.title)}</h3>
+        <p>${esc(a.body)}</p>
         <span class="act-no mono">${String(i + 1).padStart(2, '0')}</span>
       </article>`
       )
@@ -81,8 +87,7 @@ function paintVision() {
         <p>${s.body}</p>
       </article>`
       )
-      .join('') +
-    `<blockquote class="vision-quote reveal" style="--act-i:3">「前作证明了文化能被经营，本作要证明——文化能被 Z 世代玩起来。」</blockquote>`;
+      .join('');
 }
 
 function paintMeta() {
@@ -204,13 +209,12 @@ async function boot() {
   bootNav();
   await probeBackend();
 
-  const [story, points, personas, quiz, games, tts, gene] = await Promise.all([
+  const [story, points, personas, quiz, games, gene] = await Promise.all([
     loadJSON('story'),
     loadJSON('points'),
     loadJSON('personas'),
     loadJSON('quiz'),
     loadJSON('games'),
-    loadJSON('tts'),
     loadJSON('gene'),
   ]);
 
@@ -223,7 +227,6 @@ async function boot() {
   // 玩学三件套（惰性，但数据先喂）
   window.__PLAY_DATA__ = { quiz, games };
   window.__GENE_DATA__ = gene;
-  window.__TTS_DATA__ = tts;
 
   // 首屏页签默认初始化
   const firstPane = $('#paneHrd');
@@ -234,7 +237,6 @@ async function boot() {
   bootPlayTabs();
 
   initGene($('#geneCard'), gene);
-  initHuman($('#humanCard'), tts);
   initSpace($('#spaceShell'), points);
 
   bootReveal();

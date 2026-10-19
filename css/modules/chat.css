@@ -28,6 +28,9 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.1em;
+  /* 不许被 flex 行挤压：宁可换行也不让 meta 溢出黑框（button 收缩时文字会画到框外） */
+  flex: 0 0 auto;
+  max-width: 100%;
   padding: 0.44em 0.8em 0.48em;
   background: var(--paper-card);
   border: 2px solid var(--ink);
@@ -64,14 +67,14 @@
   line-height: 1.4;
   letter-spacing: 0.08em;
   color: var(--ink-faint);
+  overflow-wrap: anywhere;
 }
 
 .chip:hover {
-  transform: rotate(0deg) translateY(-2px);
   box-shadow: var(--lift-strong);
 }
 
-.chip:active { transform: translate(2px, 2px) rotate(0deg); box-shadow: 1px 1px 0 var(--ink); }
+.chip:active { box-shadow: 1px 1px 0 var(--ink); }
 
 .chip:focus-visible {
   outline: 2px solid var(--riso-pink);
@@ -162,14 +165,7 @@
   box-shadow: var(--lift-strong);
 }
 
-/* 悬停把便签抚平（各变体的旋转特异性不同，逐条覆盖） */
-.note:hover,
-.note.them:hover,
-.note.them:nth-child(even):hover,
-.note.me:hover,
-.note.opening:hover {
-  transform: rotate(0deg) translateY(-2px);
-}
+/* 便签不可交互：悬停不做任何位移/摆正 */
 
 .note-meta {
   display: block;
@@ -325,6 +321,58 @@
   opacity: 0.45;
   transform: none;
   box-shadow: 2px 2px 0 var(--ink-faint);
+}
+
+/* ---------------- 速问条：人设配套的三条可点问题 ---------------- */
+.chat-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+.chat-quick[hidden] { display: none; }
+
+.quick-chip {
+  --qc-tilt: 0deg;
+  padding: 0.28em 0.68em;
+  border: 1.5px solid var(--ink);
+  background: var(--paper-card);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.18);
+  transform: rotate(var(--qc-tilt));
+  transition: transform var(--dur-fast) var(--ease-paper),
+    box-shadow var(--dur-fast) var(--ease-paper),
+    background var(--dur-fast), color var(--dur-fast);
+}
+
+.quick-chip:nth-child(3n+1) { --qc-tilt: -1.1deg; }
+.quick-chip:nth-child(3n+2) { --qc-tilt: 0.9deg; }
+.quick-chip:nth-child(3n+3) { --qc-tilt: -0.6deg; }
+
+.quick-chip:hover {
+  background: var(--paper-deep);
+  color: var(--ink);
+  box-shadow: var(--lift);
+}
+
+.quick-chip:active {
+  box-shadow: 1px 1px 0 rgba(34, 31, 26, 0.18);
+}
+
+.quick-chip:focus-visible {
+  outline: 2px dashed var(--riso-pink);
+  outline-offset: 2px;
+}
+
+.chat-quick.is-busy {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 /* ---------------- 动效 ---------------- */
