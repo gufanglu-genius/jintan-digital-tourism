@@ -47,7 +47,8 @@ try:
             f"{r.url.replace(BASE, '')} — {(r.failure or '')[:120]}"))
         page.on("pageerror", lambda e: findings["fatal"].append(str(e)[:400]))
 
-        page.goto(BASE + "/", wait_until="networkidle", timeout=45000)
+        # 不用 networkidle：OSM 瓦片偶发拖尾会让「网络空闲」永远等不到
+        page.goto(BASE + "/", wait_until="load", timeout=30000)
         page.wait_for_timeout(2500)
 
         # 直接初始化的模块
@@ -60,7 +61,7 @@ try:
 
         checks = {
             "story-acts": lambda: count("#acts") == 5,
-            "vision": lambda: count("#visionBody") >= 4,
+            "vision": lambda: count("#visionBody") >= 3,
             "nav": lambda: count("#navLinks") == 6,
             "map-side": lambda: filled("#mapSide"),
             "map-filters": lambda: filled("#mapFilters"),
@@ -68,7 +69,6 @@ try:
             "chat-log": lambda: filled("#chatLog"),
             "gene-controls": lambda: filled("#geneControls", 3),
             "gene-meta": lambda: filled("#geneMeta"),
-            "human-picks": lambda: filled("#humanPicks", 1),
             "space-side": lambda: filled("#spaceSide"),
             "space-preview": lambda: filled("#spacePreview"),
             "hrd-pane": lambda: count("#paneHrd") >= 1 and page.eval_on_selector("#paneHrd", "el => el.innerText.length") > 20,

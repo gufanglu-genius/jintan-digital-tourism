@@ -12,7 +12,10 @@ TextProcessor / VisemeMapper / edge-tts 调用，不修改原文件）：
        同时收集 WordBoundary 词边界时间轴
     3. 拼音（pypinyin）→ 口型映射 + 口型时间线生成
     4. stdout 只输出最后一行 JSON：
-       {"audioUrl":"/tts_out/<id>.mp3","visemes":[{"shape","start","end","intensity"}]}
+       {"audioUrl":"/tts_out/<id>.mp3",
+        "visemes":[{"shape","start","end","intensity","i"}]}
+       intensity ∈ (0,1]：口型开合幅度（按音型给真值，前端驱动嘴形大小）；
+       i：该口型播到句尾时已“说出”的非空白字符数（前端据此点亮字幕，声画同帧）
 
 约定：
     - 时间单位为毫秒（ms）
@@ -202,6 +205,24 @@ class VisemeMapper:
     # 拼音拼写变体 → 表内写法
     _FINAL_ALIAS = {'iou': 'iu', 'uei': 'ui', 'uen': 'un'}
 
+    # 口型幅度：开口元音满幅，闭唇/静息近乎不动（前端用它驱动嘴形开合）
+    INTENSITY = {
+        'A': 1.0, 'B': 0.75, 'D': 0.6, 'E': 0.55, 'C': 0.5,
+        'F': 0.4, 'H': 0.35, 'G': 0.12, 'X': 0.05,
+    }
+
+    # 标点时长权重（仅无词边界、按字均分的兜底路径使用）
+    _PAUSE_HEAVY = set('。！？…!?')
+    _PAUSE_LIGHT = set('，、；：—,;:')
+
+    @classmethod
+    def _char_weight(cls, ch: str) -> float:
+        if ch in cls._PAUSE_HEAVY:
+            return 3.0
+        if ch in cls._PAUSE_LIGHT:
+            return 2.0
+        return 1.0
+
     # 口型 → 详细描述（与原管线一致，供前端/文档参考）
     VISEME_DESCRIPTIONS = {
         'A': {'name': '大开', 'jaw_open': 1.0, 'lip_round': 0.0, 'mouth_width': 0.5},
@@ -312,13 +333,16 @@ class VisemeMapper:
         """生成口型时间线（list[dict]，毫秒）。
 
         有 word_boundaries（来自 edge-tts）时按词边界精确对齐；
-        否则按非空白字符均分总时长。
+        否则按非空白字符加权分配总时长（句读标点多占停顿时长）。
+        每段携带 i = 截至该段播完已“说出”的非空白字符数（前端字幕同帧点亮）。
         之后：静默间隙补 X（闭合静息）→ 与音频首尾对齐 → 合并相邻同口型。
         """
         total = max(float(total_duration_ms or 0.0), MIN_SEGMENT_MS)
-        spans = []
+        spans = []                                   # (start, end, shape, i)
+        text_chars = [c for c in str(text) if not c.isspace()]
 
         if word_boundaries:
+            cursor_pos = 0                           # 全局已消费的非空白字符数
             for wb in word_boundaries:
                 word_text = str(wb.get("text") or "")
                 offset = float(wb.get("offset_ms") or 0.0)
@@ -326,53 +350,82 @@ class VisemeMapper:
                 chars = [c for c in word_text if not c.isspace()]
                 if not chars or duration <= 0:
                     continue
+                # 词首对齐到全局游标（12 字容错窗口，容忍边界文本轻微偏差）
+                pos = -1
+                for look in range(cursor_pos,
+                                  min(cursor_pos + 12, len(text_chars))):
+                    if text_chars[look].lower() == chars[0].lower():
+                        pos = look
+                        break
+                if pos < 0:
+                    pos = min(cursor_pos, max(len(text_chars) - 1, 0))
                 char_dur = duration / len(chars)
                 for j, ch in enumerate(chars):
+                    gi = pos + j
+                    if gi >= len(text_chars):
+                        break
                     spans.append((offset + j * char_dur,
                                   offset + (j + 1) * char_dur,
-                                  cls.char_to_viseme(ch)))
+                                  cls.char_to_viseme(ch),
+                                  gi + 1))
+                cursor_pos = pos + len(chars)
+            # i 必须单调不减（窗口容错可能回跳，clamp 住）
+            max_i = 0
+            for k in range(len(spans)):
+                max_i = max(max_i, spans[k][3])
+                spans[k] = (spans[k][0], spans[k][1], spans[k][2], max_i)
 
         if not spans:
-            # 无边界信息时，按非空白字符均分
-            chars = [c for c in str(text) if not c.isspace()]
-            if not chars:
+            # 无边界信息时，按非空白字符加权分配（重标点 3 倍、轻标点 2 倍时长）
+            if not text_chars:
                 return [{"shape": "X", "start": 0.0, "end": round(total, 1),
-                         "intensity": 1.0}]
-            char_dur = total / len(chars)
-            for j, ch in enumerate(chars):
-                spans.append((j * char_dur, (j + 1) * char_dur,
-                              cls.char_to_viseme(ch)))
+                         "intensity": cls.INTENSITY["X"], "i": 0}]
+            weights = [cls._char_weight(c) for c in text_chars]
+            wsum = sum(weights)
+            t0, acc = 0.0, 0.0
+            for j, ch in enumerate(text_chars):
+                acc += weights[j]
+                t1 = total * acc / wsum
+                spans.append((t0, t1, cls.char_to_viseme(ch), j + 1))
+                t0 = t1
 
         spans.sort(key=lambda s: s[0])
 
         # 连续化：裁剪越界、间隙补 X，时间轴覆盖 [0, total]
-        timeline = []
+        timeline = []                                # (start, end, shape, i)
         cursor = 0.0
-        for start, end, shape in spans:
+        spoken = 0                                   # 已播出的非空白字符数
+        for start, end, shape, i in spans:
             if start >= total:
                 break
             end = min(end, total)
-            if start - cursor >= GAP_FILL_MS:        # 停顿 → 闭嘴静息
-                timeline.append((cursor, start, "X"))
+            if start - cursor >= GAP_FILL_MS:        # 停顿 → 闭嘴静息；
+                # 句读字符在停顿中点亮（取下一段的 i-1，含夹在词间的标点）
+                timeline.append((cursor, start, "X", max(spoken, i - 1)))
                 cursor = start
             if end - cursor >= MIN_SEGMENT_MS:       # 重叠部分裁到 cursor
-                timeline.append((cursor, end, shape))
+                timeline.append((cursor, end, shape, i))
                 cursor = end
+            spoken = max(spoken, i)
         if total - cursor >= MIN_SEGMENT_MS:
-            timeline.append((cursor, total, "X"))
+            # 收尾静息：全篇已读完，字幕一次点亮到末尾
+            timeline.append((cursor, total, "X", len(text_chars)))
 
         return cls._merge_adjacent(timeline)
 
     @classmethod
     def _merge_adjacent(cls, timeline):
-        """合并相邻的相同口型，输出 JSON 结构"""
+        """合并相邻的相同口型，输出 JSON 结构（i 取并集最大值）"""
         merged = []
-        for start, end, shape in timeline:
+        for start, end, shape, i in timeline:
             if merged and merged[-1]["shape"] == shape and start - merged[-1]["end"] < 1.0:
                 merged[-1]["end"] = round(end, 1)
+                merged[-1]["i"] = max(merged[-1]["i"], int(i))
             else:
                 merged.append({"shape": shape, "start": round(start, 1),
-                               "end": round(end, 1), "intensity": 1.0})
+                               "end": round(end, 1),
+                               "intensity": cls.INTENSITY.get(shape, 0.5),
+                               "i": int(i)})
         # 收尾防误差：保证末尾贴住总时长
         if merged:
             merged[-1]["end"] = round(max(merged[-1]["end"], merged[-1]["start"]), 1)

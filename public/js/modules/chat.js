@@ -162,6 +162,39 @@ export function initChat(container, data) {
     };
   }
 
+  /* ---------- 速问条：按人设给三条可点问题 ---------- */
+  let quickRow = main.querySelector('.chat-quick');
+  if (!quickRow) {
+    quickRow = document.createElement('div');
+    quickRow.className = 'chat-quick';
+    quickRow.setAttribute('aria-label', '快捷提问');
+    if (form.parentNode) form.parentNode.insertBefore(quickRow, form);
+    else main.appendChild(quickRow);
+  }
+
+  function renderQuick() {
+    const p = cur();
+    const list = (p && Array.isArray(p.quick) ? p.quick : []).slice(0, 3);
+    quickRow.textContent = '';
+    if (!list.length) {
+      quickRow.hidden = true;
+      return;
+    }
+    quickRow.hidden = false;
+    list.forEach((q, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'quick-chip';
+      b.textContent = q;
+      b.style.setProperty('--qc-i', String(i));
+      b.onclick = () => {
+        if (state.generating || !state.activeId) return;
+        send(q).catch(() => {});
+      };
+      quickRow.appendChild(b);
+    });
+  }
+
   /* ---------- 元素工厂 ---------- */
   const cur = () =>
     personas.find((p, i) => idOf(p, i) === state.activeId) || null;
@@ -175,7 +208,7 @@ export function initChat(container, data) {
     if (mine) metaText = '我';
     else {
       const p = cur();
-      metaText = (p && (p.courtesy || p.name)) || '';
+      metaText = (p && (p.name || p.courtesy)) || '';
     }
     if (metaText) {
       const meta = document.createElement('span');
@@ -241,7 +274,8 @@ export function initChat(container, data) {
       btn.style.setProperty('--chip-i', String(i));
       btn.setAttribute('aria-pressed', id === state.activeId ? 'true' : 'false');
 
-      const label = p.courtesy || p.name || p.title;
+      // 粗体行必须是人名本身（陶弘景…），字号/号放 meta——原先 courtesy 当主标题，五张 chip 全是「字通明，自号…」认不出谁是谁
+      const label = p.name || p.courtesy || p.title;
       const name = document.createElement('span');
       name.className = 'chip-name';
       name.textContent =
@@ -251,7 +285,7 @@ export function initChat(container, data) {
 
       const meta = document.createElement('span');
       meta.className = 'chip-meta mono';
-      meta.textContent = [p.title, p.domain].filter(Boolean).join(' · ');
+      meta.textContent = [p.courtesy, p.title].filter(Boolean).join(' · ');
 
       btn.appendChild(name);
       if (meta.textContent) btn.appendChild(meta);
@@ -304,6 +338,7 @@ export function initChat(container, data) {
   function setGenerating(on) {
     state.generating = on;
     status.hidden = !on;
+    quickRow.classList.toggle('is-busy', on);
     updateSend();
   }
 
@@ -331,6 +366,7 @@ export function initChat(container, data) {
     writeActive(state.activeId);
     renderChips();
     renderLog();
+    renderQuick();
     updateSend();
   }
 

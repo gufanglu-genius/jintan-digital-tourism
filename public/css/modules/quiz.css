@@ -86,7 +86,6 @@
 
 .quiz-dot:not(:disabled) { cursor: pointer; }
 .quiz-dot:not(:disabled):hover {
-  transform: translateY(-3px);
   box-shadow: 2px 2px 0 var(--ink);
 }
 
@@ -206,12 +205,10 @@
 .quiz-opt .tag-no { color: var(--riso-red); }
 
 .quiz-opt:hover:not(:disabled) {
-  transform: translate(-2px, -2px) rotate(-0.5deg);
-  box-shadow: var(--lift);
+  box-shadow: var(--lift-strong);
 }
 
 .quiz-opt:active:not(:disabled) {
-  transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 rgba(34, 31, 26, 0.2);
 }
 
@@ -371,6 +368,15 @@
   font-size: 1.05rem;
 }
 
+/* 研学环·毕营：完卷且四大资源全对才盖 */
+.quiz-ys-stamp {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  font-size: 0.95rem;
+  animation: quiz-stamp 460ms 260ms var(--ease-paper) both;
+}
+
 .quiz-mastery {
   background: var(--paper-card);
   border: 2px solid var(--ink);
@@ -422,6 +428,24 @@
 }
 
 .mlegend .mbox { width: 11px; height: 11px; }
+
+/* —— 研学环 · 四大资源掌握格 —— */
+.quiz-yanxue {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1.5px dashed var(--ink-faint);
+}
+.quiz-yanxue > .kicker {
+  display: block;
+  color: var(--riso-red);
+  margin-bottom: 0.15rem;
+}
+.quiz-yx-hint {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin: 0.55rem 0 0;
+}
 
 .quiz-score-note {
   font-size: var(--fs-micro);
@@ -515,6 +539,7 @@
   .quiz-card.is-shake,
   .quiz-feedback,
   .quiz-feedback .stamp,
+  .quiz-ys-stamp,
   .quiz-opt,
   .quiz-dot {
     animation: none !important;

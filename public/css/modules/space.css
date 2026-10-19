@@ -1,8 +1,8 @@
 /* ============================================================
-   05 · 空间皮肤 — 把非遗住进去
-   预览：贴在手账上的建筑图纸（纸片剪贴客房立面 · mono 尺寸标注）
-   侧栏：皮肤选择 + 场景文案（points 原文）+ 生成这间房
-   换肤：palette 走 --sk1…--sk5，切换时 riso 错位过渡
+   05 · 空间涂装台 — 把非遗住进去（亲手刷）
+   预览：贴在手账上的建筑图纸（纸片剪贴客房立面 · 构件可点选上色）
+   侧栏：纹样架 + 槽位清单 + 场景文案（points 原文）+ 生成这间房
+   上色：palette 走 --sk1…--sk5；槽位纹样走 --pat-xxx → url(#sp-pat-n)
    ============================================================ */
 
 .space-shell [hidden] { display: none !important; }
@@ -104,19 +104,20 @@
 .sp-glass { fill: var(--sk3, var(--paper-deep)); }
 .sp-hill { fill: var(--sk2, var(--clay)); }
 .sp-sun { fill: var(--sk1, var(--riso-red)); }
+/* 可刷槽位：刷过 = pattern 填充；没刷 = 原皮肤变量（素色） */
 .sp-curtain {
-  fill: var(--sk1, var(--clay));
+  fill: var(--pat-curtain, var(--sk1, var(--clay)));
   stroke: var(--ink);
   stroke-width: 2;
 }
 
 .sp-shade {
-  fill: var(--sk2, var(--bamboo));
+  fill: var(--pat-shade, var(--sk2, var(--bamboo)));
   stroke: var(--ink);
   stroke-width: 2;
 }
 
-.sp-art-bg { fill: var(--sk1, var(--riso-red)); }
+.sp-art-bg { fill: var(--pat-art, var(--sk1, var(--riso-red))); }
 .sp-art-zig { fill: var(--sk5, var(--paper-card)); }
 .sp-art-sun { fill: var(--sk2, var(--bamboo)); }
 .sp-art-base { fill: var(--sk3, var(--paper-deep)); }
@@ -137,7 +138,7 @@
   stroke-width: 2;
 }
 .sp-blanket {
-  fill: var(--sk1, var(--clay));
+  fill: var(--pat-blanket, var(--sk1, var(--clay)));
   stroke: var(--ink);
   stroke-width: 2;
 }
@@ -155,12 +156,31 @@
 }
 
 .sp-rug {
-  fill: var(--sk3, var(--paper-deep));
+  fill: var(--pat-rug, var(--sk3, var(--paper-deep)));
   stroke: var(--ink);
   stroke-width: 2;
 }
-.sp-rug-in { fill: var(--sk1, var(--clay)); }
+.sp-rug-in { fill: var(--pat-rug, var(--sk1, var(--clay))); }
 .sp-rug-mid { fill: var(--sk2, var(--bamboo)); }
+
+/* ---------------- 槽位热区：透明可点，hover/选中出 riso 描边 ---------------- */
+.sp-hot { cursor: pointer; }
+.sp-hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2;
+  transition: stroke var(--dur-fast) var(--ease-paper);
+}
+.sp-hot:hover .sp-hit {
+  stroke: var(--riso-red);
+  stroke-dasharray: 5 3;
+}
+.sp-hot.sel .sp-hit {
+  stroke: var(--riso-red);
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+}
+/* 选中态只留静态描边：去掉无限闪烁（spSelBlink）与上色抖动（spPaintJit） */
 
 /* 硬偏移纸厚阴影（禁柔化） */
 .sp-hard { filter: drop-shadow(3px 3px 0 rgba(34, 31, 26, 0.16)); }
@@ -206,21 +226,7 @@
   mix-blend-mode: multiply;
   pointer-events: none;
 }
-
-.sp-svg.is-swap .sp-scene { animation: spRiso 460ms var(--ease-paper) both; }
-.sp-svg.is-swap .sp-ghost { animation: spGhost 460ms steps(7, end) both; }
-
-@keyframes spRiso {
-  0% { transform: translate(7px, -4px); }
-  35% { transform: translate(-5px, 3px); }
-  70% { transform: translate(3px, -2px); }
-  100% { transform: translate(0, 0); }
-}
-
-@keyframes spGhost {
-  0% { opacity: 0.45; transform: translate(7px, -4px); }
-  100% { opacity: 0; transform: translate(0, 0); }
-}
+/* 换肤反馈只走上面的 fill/stroke 过渡：去掉整幕 riso 错位 + ghost 叠印动画 */
 
 /* ---------------- AI 成图：贴在图纸旁 ---------------- */
 .sp-print {
@@ -258,21 +264,46 @@
 }
 
 /* ============================================================
-   侧栏：场景名 + 换肤 + 文案 + 生成
+   侧栏：纹样架 + 槽位清单 + 生成（不再内部滚动，整栏随页展示）
+   场景文案挪到壳底通栏 .sp-notes
    ============================================================ */
 .space-side {
-  height: var(--sp-h);
+  min-height: var(--sp-h);
   padding: 15px 15px 18px;
   background: var(--paper);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--ink-faint) transparent;
+  display: flex;
+  flex-direction: column;
 }
 
-.space-side::-webkit-scrollbar { width: 8px; }
-.space-side::-webkit-scrollbar-thumb { background: var(--ink-faint); }
-.space-side::-webkit-scrollbar-track { background: transparent; }
+/* 壳底通栏：场景原型 / 落地合作文案 */
+.sp-notes {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.9rem 1.4rem;
+  padding: 1rem clamp(0.9rem, 2.4vw, 1.4rem) 1.15rem;
+  border-top: 2px solid var(--ink);
+  background: var(--paper-card);
+}
+
+.sp-notes .sp-copy,
+.sp-notes .sp-coop { margin-bottom: 0; }
+
+.sp-notes .kicker {
+  display: block;
+  margin-bottom: 0.45em;
+  color: var(--riso-red);
+}
+
+.sp-notes .sp-coop {
+  transform: none;
+  box-shadow: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.sp-notes .sp-coop .sp-hook { font-size: 0.92rem; }
 
 /* —— 头部 —— */
 .sp-head {
@@ -346,7 +377,6 @@
 }
 
 .sp-chip:hover {
-  transform: translate(-1px, -1px) rotate(-1.6deg);
   box-shadow: 3px 3px 0 var(--ink);
 }
 
@@ -369,6 +399,74 @@
   width: 9px;
   height: 9px;
   border: 1px solid var(--ink);
+}
+
+/* —— 上色区：槽位清单 —— */
+.sp-slots { margin: 0 0 1rem; }
+.sp-slots .kicker { display: block; margin-bottom: 0.45em; color: var(--riso-red); }
+.sp-slots-tip {
+  margin: 0 0 0.55em;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  color: var(--ink-faint);
+}
+.sp-slot-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0.4rem;
+}
+.sp-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  text-align: left;
+  padding: 0.4em 0.55em 0.36em;
+  border: 1.5px solid var(--ink);
+  background: var(--paper-card);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.18);
+  transition: transform var(--dur-fast) var(--ease-paper),
+    box-shadow var(--dur-fast) var(--ease-paper), border-color var(--dur-fast);
+}
+.sp-slot:hover { box-shadow: 3px 3px 0 var(--ink); }
+.sp-slot:focus-visible { outline: 2px dashed var(--riso-pink); outline-offset: 2px; }
+.sp-slot.on {
+  border-color: var(--riso-red);
+  box-shadow: 3px 3px 0 var(--riso-red);
+}
+.sp-slot.painted .sp-slot-name::after {
+  content: "●";
+  margin-left: 0.35em;
+  font-size: 0.55em;
+  vertical-align: 0.25em;
+  color: var(--riso-red);
+}
+.sp-slot-name {
+  font-family: var(--font-serif);
+  font-size: 0.98rem;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+}
+.sp-slot-hint {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sp-slot.painted .sp-slot-hint { color: var(--ink); }
+.sp-slot-acts {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+.sp-slot-acts .btn {
+  flex: 1;
+  padding: 0.4em 0.5em;
+  font-size: var(--fs-micro);
+  text-align: center;
 }
 
 /* —— 场景文案（points 原文） —— */
@@ -435,9 +533,9 @@
   color: var(--ink-faint);
 }
 
-/* —— 生成动作 —— */
+/* —— 生成动作：贴在侧栏底部（侧栏不再内部滚动，普通块即可） —— */
 .sp-act {
-  margin-top: 0.2rem;
+  margin-top: auto;
   padding-top: 0.85rem;
   border-top: 1.5px dashed var(--ink-faint);
 }
@@ -479,10 +577,7 @@
     border-bottom: 2px solid var(--ink);
     min-height: auto;
   }
-  .space-side {
-    height: auto;
-    max-height: min(64vh, 540px);
-  }
+  .space-side { min-height: 0; }
 }
 
 @media (max-width: 560px) {
@@ -491,7 +586,7 @@
   .sp-sheet { transform: rotate(-0.4deg); }
   .sp-print { flex: 1 1 100%; max-width: 260px; }
   .sp-title { font-size: 9px; letter-spacing: 0.1em; }
-  .space-side { padding: 13px 13px 16px; max-height: none; }
+  .space-side { padding: 13px 13px 16px; }
 }
 
 @media (max-width: 380px) {
@@ -502,14 +597,12 @@
    尊重减弱动效
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  .sp-svg.is-swap .sp-scene,
-  .sp-svg.is-swap .sp-ghost,
   .sp-print { animation: none; }
   .sp-svg rect,
   .sp-svg circle,
   .sp-svg polygon,
   .sp-svg path,
   .sp-svg line,
-  .sp-chip { transition: none; }
-  .sp-chip:hover { transform: none; box-shadow: 2px 2px 0 var(--ink); }
+  .sp-chip,
+  .sp-slot { transition: none; }
 }

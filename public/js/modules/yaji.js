@@ -6,35 +6,44 @@
    背面半调网点），桌面纸黄，riso 错位，硬偏移阴影
    导出：export function initYaji(pane)  // #paneYaji，幂等
    数据：window.__PLAY_DATA__.games.yaji（characters / treasures；
-         数据为空时用前身项目真实内容兜底，绝不现编）
+         数据为空时镜像同一份金坛名册兜底，绝不现编）
    ============================================================ */
 
-/* ---------------- 牌库定义（逐字移植前身项目） ---------------- */
+/* ---------------- 牌库定义（金坛题材：著作名与掌故皆有出处，机制不变） ---------------- */
 const CARD_DEFS = {
-  lilun:         { name: '立论',     type: 'article', sub: '散文', effect: '造成1点文气损伤',   cat: 'atk' },
-  bianbo:        { name: '辩驳',     type: 'article', sub: '散文', effect: '抵消一次立论损伤',   cat: 'def' },
-  dayunshanfang: { name: '大云山房', type: 'article', sub: '散文', effect: '立论+骈文属性',     cat: 'atk', sp: 1 },
-  mingkewen:     { name: '茗柯文',   type: 'article', sub: '散文', effect: '立论+摸1张牌',      cat: 'atk', sp: 1, draw: 1 },
-  pianwenchao:   { name: '骈体文钞', type: 'article', sub: '骈文', effect: '立论+骈散双属性',   cat: 'atk', sp: 1 },
-  qijiawenchao:  { name: '七家文钞', type: 'article', sub: '散文', effect: '立论+弃目标1牌',    cat: 'atk', sp: 1, disc: 1 },
-  futangci:      { name: '复堂词',   type: 'article', sub: '词',   effect: '立论+诗词属性',     cat: 'atk', sp: 1 },
-  yangyizhai:    { name: '养一斋集', type: 'article', sub: '散文', effect: '立论+回复1文气',    cat: 'atk', sp: 1, heal: 1 },
-  diyiliu:       { name: '第一流',   type: 'jj', effect: '本回合立论伤害+1',   cat: 'spc' },
-  zilichu:       { name: '自立处',   type: 'jj', effect: '抵消一次境界牌效果', cat: 'spc' },
-  jiwendao:      { name: '济文道',   type: 'jj', effect: '弃1牌令己摸2牌',     cat: 'spc' },
-  piansanhe:     { name: '骈散合',   type: 'jj', effect: '立论视为骈散双属性', cat: 'spc' },
-  yineiyanwai:   { name: '意内言外', type: 'jj', effect: '受损伤时摸1张牌',    cat: 'spc' },
-  jingshiwen:    { name: '经世文',   type: 'jj', effect: '弃1牌弃目标1张文章牌', cat: 'spc' },
-  bulizong:      { name: '不立宗',   type: 'jj', effect: '免疫一次门派效果',   cat: 'spc' },
-  xingqingzhen:  { name: '性情真',   type: 'jj', effect: '回复1点文气',        cat: 'hel' },
-  boxueyang:     { name: '博学养',   type: 'jj', effect: '摸2张牌',            cat: 'spc' },
-  tongchetu:     { name: '同车图',   type: 'zy', effect: '回复1点文气',        cat: 'hel' },
-  lunwentie:     { name: '论文帖',   type: 'zy', effect: '回复1文气可弃牌再回1', cat: 'hel' },
-  yanghuhui:     { name: '阳湖会',   type: 'zy', effect: '所有角色各回复1文气', cat: 'hel' },
-  v1:            { name: '第一流',   type: 'vic', effect: '流派标识·集齐四张成宗', cat: 'vic' },
-  v2:            { name: '自立处',   type: 'vic', effect: '流派标识·集齐四张成宗', cat: 'vic' },
-  v3:            { name: '济文道',   type: 'vic', effect: '流派标识·集齐四张成宗', cat: 'vic' },
-  v4:            { name: '骈散合',   type: 'vic', effect: '流派标识·集齐四张成宗', cat: 'vic' },
+  lilun:         { name: '立论',       type: 'article', sub: '散文', effect: '造成1点文气损伤',   cat: 'atk' },
+  bianbo:        { name: '辩驳',       type: 'article', sub: '散文', effect: '抵消一次立论损伤',   cat: 'def' },
+  dayunshanfang: { name: '真诰',       type: 'article', sub: '散文', effect: '立论+骈文属性',     cat: 'atk', sp: 1 },
+  mingkewen:     { name: '抱朴子',     type: 'article', sub: '散文', effect: '立论+摸1张牌',      cat: 'atk', sp: 1, draw: 1 },
+  pianwenchao:   { name: '六书音均表', type: 'article', sub: '骈文', effect: '立论+骈散双属性',   cat: 'atk', sp: 1 },
+  qijiawenchao:  { name: '肘后备急方', type: 'article', sub: '散文', effect: '立论+弃目标1牌',    cat: 'atk', sp: 1, disc: 1 },
+  futangci:      { name: '兰溪棹歌',   type: 'article', sub: '词',   effect: '立论+诗词属性',     cat: 'atk', sp: 1 },
+  yangyizhai:    { name: '本草经集注', type: 'article', sub: '散文', effect: '立论+回复1文气',    cat: 'atk', sp: 1, heal: 1 },
+  diyiliu:       { name: '山中宰相',   type: 'jj', effect: '本回合立论伤害+1',       cat: 'spc' },
+  zilichu:       { name: '不撑铁骨',   type: 'jj', effect: '抵消下一次文气损伤',     cat: 'spc' },
+  jiwendao:      { name: '华阳洞天',   type: 'jj', effect: '弃1张牌，摸2张牌',       cat: 'spc' },
+  piansanhe:     { name: '周礼汉读考', type: 'jj', effect: '查看对手手牌（写入战报）', cat: 'spc' },
+  yineiyanwai:   { name: '万里未归',   type: 'jj', effect: '受损伤后摸1张牌（1次）', cat: 'spc' },
+  jingshiwen:    { name: '郁冈笔麈',   type: 'jj', effect: '弃1张牌，弃对手1张文章牌', cat: 'spc' },
+  bulizong:      { name: '不立宗',     type: 'jj', effect: '弃1张牌，对手弃1张牌',   cat: 'spc' },
+  xingqingzhen:  { name: '不耕砚田',   type: 'jj', effect: '回复1点文气',            cat: 'hel' },
+  boxueyang:     { name: '弃仕从医',   type: 'jj', effect: '摸2张牌',                cat: 'spc' },
+  tongchetu:     { name: '青蒿治疟',   type: 'zy', effect: '回复1点文气',            cat: 'hel' },
+  lunwentie:     { name: '取兆讨吉',   type: 'zy', effect: '回复1点文气',            cat: 'hel' },
+  yanghuhui:     { name: '文人雅集',   type: 'zy', effect: '所有角色各回复1文气',    cat: 'hel' },
+  v1:            { name: '山中宰相',   type: 'vic', effect: '流派标识·集齐四张成宗', cat: 'vic' },
+  v2:            { name: '不撑铁骨',   type: 'vic', effect: '流派标识·集齐四张成宗', cat: 'vic' },
+  v3:            { name: '华阳洞天',   type: 'vic', effect: '流派标识·集齐四张成宗', cat: 'vic' },
+  v4:            { name: '周礼汉读考', type: 'vic', effect: '流派标识·集齐四张成宗', cat: 'vic' },
+};
+
+/* 五人对战技（与 games.json 技能名一一对应，皆接入对局机制） */
+const SKILL_MECH = {
+  taohongjing: '准备阶段额外摸1张牌',
+  gehong: '所有回复效果额外+1点文气',
+  daishulun: '受到文气损伤后摸1张牌',
+  duanyucai: '立论命中时随机弃对手1张牌（每回合首次）',
+  wangkentang: '回合结束时若文气不高于2，回复1点文气',
 };
 
 const DECK_KEYS = [
@@ -46,58 +55,61 @@ const DECK_KEYS = [
   'v1', 'v2', 'v3', 'v4',
 ];
 
-/* 雅集题词（前身项目原文） */
+/* 雅集题词（金坛五文人名句，皆有出处） */
 const QUOTES = [
-  '文章之道，以意为先，以气为主。——恽敬',
-  '意内言外，词之为教也。——张惠言',
-  '骈散合一，文之正道也。——李兆洛',
-  '文以载道，学以致用。——陆继辂',
-  '文章须自出机杼，成一家风骨。——恽敬',
+  '山中何所有？岭上多白云。——陶弘景',
+  '我命在我不在天。——葛洪《抱朴子》',
+  '一年将尽夜，万里未归人。——戴叔伦',
+  '不耕砚田无乐事，不撑铁骨莫支贫。——段玉裁',
 ];
 
-/* ---------------- 兜底数据（前身项目真实内容，逐字取用） ---------------- */
+/* ---------------- 兜底数据（镜像 games.json 金坛名册，绝不现编） ---------------- */
 const NAME_ID = {
-  '恽敬': 'yujing', '张惠言': 'zhanghuiyan', '李兆洛': 'lizhaoluo',
-  '陆继辂': 'lujilu', '董士锡': 'dongshixi',
+  '陶弘景': 'taohongjing', '葛洪': 'gehong', '戴叔伦': 'daishulun',
+  '段玉裁': 'duanyucai', '王肯堂': 'wangkentang',
 };
 
 const IMG_MAP = {
-  '恽敬': 'yujing.jpg', '张惠言': 'zhanghuiyan.jpg', '李兆洛': 'lizhaoluo.jpg',
-  '陆继辂': 'lujilu.jpg', '董士锡': 'dongshixi.jpg',
-  '乱针绣': 'luanzhenxiu.jpg', '大麻糕': 'damagao.jpg',
-  '梳篦': 'shubi.jpg', '留青竹刻': 'liuqingzhuke.jpg',
+  '陶弘景': 'taohongjing.jpg', '葛洪': 'gehong.jpg', '戴叔伦': 'daishulun.jpg',
+  '段玉裁': 'duanyucai.jpg', '王肯堂': 'wangkentang.jpg',
+  '金坛刻纸《大运河》长卷': 'tr-kezhi.jpg', '段玉裁《说文解字注》刻本': 'tr-shuowen.jpg',
+  '金坛封缸酒': 'tr-fenggang.jpg', '指前鱼灯': 'tr-yudeng.jpg',
 };
 
 const FALLBACK_CHARS = [
-  { id: 'yujing', name: '恽敬', title: '奇峻之士', qi: 6, skill: '奇正相生', desc: '使用散文牌伤害时可弃骈文牌令伤害+1',
-    history: '恽敬（1757—1817），字子居，号简堂，阳湖（今常州武进）人。清代著名散文家，阳湖派创始人之一。工古文，兼取骈散之长，文风峻拔奇崛，气势雄浑。与张惠言并称「阳湖二家」，著有《大云山房文稿》。恽敬论文主张「义法」与「气骨」并重，强调文章须有真性情、真见识，反对空疏无物。其文论对清代散文发展影响深远，为阳湖文派奠定了理论基础。' },
-  { id: 'zhanghuiyan', name: '张惠言', title: '意内言外', qi: 6, skill: '缘情造端', desc: '受损伤后立即摸两张牌',
-    history: '张惠言（1761—1802），字皋文，阳湖（今常州武进）人。清代著名经学家、文学家、词人，阳湖派代表人物。精研《周易》《仪礼》，为常州词派开山鼻祖。张惠言词作强调「意内言外」，主张词要有寄托，以比兴手法表达深沉情感，开创了常州词派的美学传统。编有《词选》，影响了整个清代词坛。同时擅古文，与恽敬齐名，著有《茗柯文编》。' },
-  { id: 'lizhaoluo', name: '李兆洛', title: '通儒达识', qi: 6, skill: '骈散相杂', desc: '可将骈文牌当散文牌使用',
-    history: '李兆洛（1769—1841），字申耆，阳湖（今常州武进）人。清代著名学者、文学家、地理学家，阳湖派重要成员。博学多才，通经史、天文、地理、历算，编纂《骈体文钞》主张骈散合一，打破了当时骈散文对立的僵局。李兆洛认为骈文与散文各有优长，应相互借鉴融合，此论对清代文坛影响深远。主讲江阴暨阳书院近二十年，门下人才辈出。' },
-  { id: 'lujilu', name: '陆继辂', title: '志节之士', qi: 6, skill: '七家文选', desc: '弃一张牌令角色摸或弃一张牌',
-    history: '陆继辂（1772—1834），字祁孙，阳湖（今常州武进）人。清代文学家、诗人，阳湖派骨干成员。工诗文，风格清刚峻洁，与恽敬、张惠言交游密切。编有《七家文钞》，选录阳湖派七位代表作家的古文作品，是研究阳湖文派的重要文献。陆继辂为人耿介，论文章气节，主张文品即人品，文章须有志节之气方能传世。' },
-  { id: 'dongshixi', name: '董士锡', title: '瑰辞朴学', qi: 6, skill: '研咏博访', desc: '文章牌被响应后各摸一牌',
-    history: '董士锡（1782—1831），字晋卿，阳湖（今常州武进）人。清代经学家、文学家，阳湖派后期代表人物，张惠言外甥。幼承家学，精研经术，兼擅诗词古文。董士锡学问渊博，融通经学与文学，主张「以朴学为根柢，以瑰辞为华采」，将考据之功与辞章之美结合。其文风典雅醇厚，深得阳湖派精髓。著有《齐物论斋文集》，为阳湖文派后期的重要著作。' },
+  { id: 'taohongjing', name: '陶弘景', title: '华阳隐居 · 山中宰相', qi: 6,
+    skill: '洞天开卷：出战时以道文化与山水诗文化解难题，为全场文案注入隐逸江南气质',
+    desc: '南朝齐梁的茅山宗开创者，隐居山中却被朝廷大事频频问策——“山中何所有？岭上多白云。”金坛华阳洞天古名即是他留给这座城最硬的文化钩子。' },
+  { id: 'gehong', name: '葛洪', title: '抱朴子 · 小仙翁', qi: 6,
+    skill: '丹火祛魅：把炼丹术语翻译成古代化学科普，破除玄学迷雾',
+    desc: '东晋丹道医药学家，“我命由我不由天”最早出处者，青蒿治疟启发了屠呦呦。诚实标注：他是大茅山道教文化圈人物、籍贯句容，非金坛本地人。' },
+  { id: 'daishulun', name: '戴叔伦', title: '容管经略使 · 唐诗乡愁客', qi: 6,
+    skill: '唤诗：吟出唐诗名句即可对诗通关，为返乡与节气场景附加情绪价值',
+    desc: '中唐金坛籍诗人与能吏，“一年将尽夜，万里未归人”写尽游子心事；注意《兰溪棹歌》所咏为浙江兰溪，不可当作长荡湖诗。' },
+  { id: 'duanyucai', name: '段玉裁', title: '懋堂先生 · 说文解字注', qi: 6,
+    skill: '拆字解谜：以六书之法拆解非遗纹样、匾额与家训，开启文字关卡',
+    desc: '清代金坛文字学家，耗三十余年成《说文解字注》三十卷，“不耕砚田无乐事，不撑铁骨莫支贫”——Z世代长期主义的祖师爷。' },
+  { id: 'wangkentang', name: '王肯堂', title: '王金坛 · 证治准绳', qi: 6,
+    skill: '本草问诊：为研学与养生内容把关，以循证视角解读茅山药草',
+    desc: '明代金坛进士，仕途受挫后弃仕从医，以十余年著成约220万字《证治准绳》——高考才子的人生B计划，对Z世代最友好。' },
 ];
 
 const FALLBACK_TREASURES = [
-  { id: 'luanzhenxiu', name: '乱针绣', title: '绣心护体', desc: '武进乱针绣，以针为笔，以线为墨，绣出万千气象。',
-    effect: '使用后获得护盾：下次受伤害30%概率闪避',
-    history: '乱针绣由常州武进人杨守玉于1930年代独创。她将西洋绘画的色彩理论与中国传统刺绣技艺融合，以长短交叉、分层加色的针法打破传统刺绣「密接其针、排比其线」的规则，形成「以针为笔、以线为色」的独特艺术风格。乱针绣作品远观如油画般色彩斑斓，近看则针法细腻、层次分明，被誉为中国刺绣艺术的一大突破，2007年列入江苏省非物质文化遗产名录。' },
-  { id: 'damagao', name: '大麻糕', title: '麻糕充饥', desc: '武进大麻糕，香甜酥脆，一口下去，精神百倍。',
-    effect: '使用后恢复2点文气',
-    history: '大麻糕是常州武进地区的传统名点，始于清咸丰年间，至今已有百余年历史。以面粉、芝麻、猪油、白糖为主要原料，经揉面、包馅、压模、烘烤等工序制成。成品色泽金黄、香甜酥脆、入口即化，是常州人逢年过节、走亲访友的必备糕点。大麻糕制作技艺于2009年列入常州市非物质文化遗产名录，承载着武进人世代相传的味觉记忆。' },
-  { id: 'shubi', name: '梳篦', title: '梳篦理绪', desc: '常州梳篦，梳理千丝万缕，理清纷乱思绪。',
-    effect: '使用后摸2张牌',
-    history: '常州梳篦制作始于东晋，距今已有一千六百余年历史。以黄杨木为料，经选料、开片、拉花、刻花等七十余道工序精制而成。梳篦齿密而不挂发，篦发去垢而不伤头皮，兼具实用与观赏价值。常州梳篦在明清时期被列为贡品，有「宫梳名篦」之美誉。其制作技艺于2008年列入国家级非物质文化遗产名录，是中国传统手工艺的瑰宝。' },
-  { id: 'liuqingzhuke', name: '留青竹刻', title: '竹刻铭记', desc: '留青竹刻，以刀代笔，在竹上铭记千古文章。',
-    effect: '查看对手全部手牌并弃掉其1张',
-    history: '留青竹刻始于唐代，兴盛于明清，是常州武进的传统竹刻艺术。其技法独特——利用竹皮青筠的厚薄变化表现画面层次，铲去花纹以外的竹皮，留下青筠作为图案，故名「留青」。作品刀法细腻、层次分明、意境深远，集书画、雕刻于一体。常州留青竹刻于2008年列入国家级非物质文化遗产名录，代表了中国竹刻艺术的最高水平。' },
+  { id: 'tr0', name: '金坛刻纸《大运河》长卷', rarity: '传说',
+    intro: '金坛刻纸代表作、百米长卷《大运河》，以刻刀代剪的江南细刻巅峰；所在中国剪纸项目是常州地区唯一入选人类非物质文化遗产代表作名录的项目（2009年）。' },
+  { id: 'tr1', name: '段玉裁《说文解字注》刻本', rarity: '史诗',
+    intro: '金坛籍乾嘉学者段玉裁倾三十余年撰成的三十卷巨著，彰明许书体例、考订词义变迁，王念孙序称“千七百年来无此作矣”，是汉字研究的巅峰之作。' },
+  { id: 'tr2', name: '金坛封缸酒', rarity: '稀有',
+    intro: '以糯米发酵压榨、密封陈缸的甜型黄酒，酒色金黄、甘甜醇厚；2008年列入第二批国家级非遗名录。元末朱元璋饮后赞绝的说法属民间传说层，仅作彩蛋标注。' },
+  { id: 'tr3', name: '指前鱼灯', rarity: '普通',
+    intro: '发源于金坛指前镇芦家村、源于长荡湖渔民“取兆讨吉”习俗的鱼灯（约二百余年），竹篾扎制、糊纸彩绘，入夜巡游寓意年年有余，系江苏省级非遗。' },
 ];
 
 /* 宝物效果按名归类（有 data.effect 文案时以文案展示，效果键仍按名） */
-const TR_RULE = { '乱针绣': 'shield', '大麻糕': 'heal2', '梳篦': 'draw2', '留青竹刻': 'peek' };
+const TR_RULE = {
+  '金坛刻纸《大运河》长卷': 'peek', '段玉裁《说文解字注》刻本': 'draw2',
+  '金坛封缸酒': 'heal2', '指前鱼灯': 'heal1',
+};
 
 /* ---------------- 小工具 ---------------- */
 const $ = (sel, root) => root.querySelector(sel);
@@ -135,6 +147,12 @@ function asset(name) {
   return name ? 'assets/yaji/' + name : '';
 }
 
+/* 技能的对战机制说明（games.json 技能文偏研学语境，这里补对战口径） */
+function mechLine(ch) {
+  const m = SKILL_MECH[ch && ch.id];
+  return m ? '（对战：' + m + '）' : '';
+}
+
 /* ---------------- 数据归一 ---------------- */
 function normChar(c, i) {
   if (!c || typeof c !== 'object') return null;
@@ -146,6 +164,7 @@ function normChar(c, i) {
     title: String(c.title || ''),
     qi: Number.isFinite(Number(c.qi)) && Number(c.qi) > 0 ? Number(c.qi) : 6,
     skill: String(c.skill || ''),
+    skillMech: SKILL_MECH[String(c.id || NAME_ID[name] || 'ch' + i)] || '',
     blurb: String(c.blurb || c.desc || ''),
     history: String(c.history || ''),
     img: c.img ? String(c.img) : asset(IMG_MAP[name] || ''),
@@ -242,9 +261,12 @@ function boot(pane) {
               .map(
                 (c, i) => `
             <button class="y-slip" type="button" data-act="to-select" style="--slip-i:${i}">
-              <span class="y-slip-no mono">${String(i + 1).padStart(2, '0')}</span>
-              <span class="y-slip-name">${c.name}</span>
-              <span class="y-slip-title">${c.title}</span>
+              <span class="y-slip-face">
+                ${c.img ? `<img src="${esc(c.img)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+                <span class="y-slip-fb" aria-hidden="true">${esc(c.name.slice(0, 1))}</span>
+              </span>
+              <span class="y-slip-name">${esc(c.name)}</span>
+              <span class="y-slip-title"><i class="y-slip-no mono">${String(i + 1).padStart(2, '0')}</i>${esc(c.title)}</span>
             </button>`
               )
               .join('')}
@@ -286,7 +308,6 @@ function boot(pane) {
 
         <div class="y-midbar">
           <button class="btn ghost y-logtog" data-act="toglog" type="button">战报</button>
-          <button class="btn y-skill" data-act="skill" type="button" hidden>七家文选</button>
           <span class="y-tip mono" data-role="tip"></span>
         </div>
         <div class="y-log" data-role="log" hidden></div>
@@ -378,7 +399,6 @@ function boot(pane) {
     oCount: $('[data-role="oCount"]', R),
     btnPlay: $('[data-act="play"]', R),
     btnBegin: $('[data-act="begin"]', R),
-    btnSkill: $('[data-act="skill"]', R),
     tr: $('[data-role="tr"]', R),
     detail: $('[data-role="detail"]', R),
     flash: $('[data-role="flash"]', R),
@@ -405,7 +425,6 @@ function boot(pane) {
     p: null, o: null,
     deck: [], disc: [],
     vics: { p: new Set(), o: new Set() },
-    skillUsed: false,
     trUsed: false,
     trPending: null,
     logOpen: false,
@@ -427,6 +446,7 @@ function show(name) {
   els.tr.hidden = true;
   S.trPending = null;
   if (trResolve) { const r = trResolve; trResolve = null; r(); }
+  clearTimeout(trTimer);   // 不清的话，上一张小传的 8s 定时器会把下一张提前关掉
   els.detail.hidden = true;
   Object.entries(els.scr).forEach(([k, node]) => { node.hidden = k !== name; });
 }
@@ -455,15 +475,14 @@ function bindEvents() {
       renderLog();
       return;
     }
-    if (act === 'skill') { useSkill(); return; }
     if (act === 'tr-ok') { resolveTr(); return; }
     if (act === 'd-close') { els.detail.hidden = true; return; }
     if (act === 'who-o') {
-      if (S.o) openDetail({ tag: '对家 · ' + S.o.ch.title, name: S.o.ch.name, eff: '【' + S.o.ch.skill + '】' + S.o.ch.blurb, hist: S.o.ch.history });
+      if (S.o) openDetail({ tag: '对家 · ' + S.o.ch.title, name: S.o.ch.name, eff: '【' + S.o.ch.skill + '】' + S.o.ch.blurb + mechLine(S.o.ch), hist: S.o.ch.history });
       return;
     }
     if (act === 'who-p') {
-      if (S.p) openDetail({ tag: '执笔 · ' + S.p.ch.title, name: S.p.ch.name, eff: '【' + S.p.ch.skill + '】' + S.p.ch.blurb, hist: S.p.ch.history });
+      if (S.p) openDetail({ tag: '执笔 · ' + S.p.ch.title, name: S.p.ch.name, eff: '【' + S.p.ch.skill + '】' + S.p.ch.blurb + mechLine(S.p.ch), hist: S.p.ch.history });
       return;
     }
   });
@@ -536,7 +555,7 @@ function renderCharGrid() {
           <div class="y-cc-name">${esc(c.name)}</div>
           <div class="y-cc-title mono">${esc(c.title)}</div>
           <div class="y-cc-qi mono">文气 ${c.qi}</div>
-          <div class="y-cc-skill"><b>【${esc(c.skill)}】</b> ${esc(c.blurb)}</div>
+          <div class="y-cc-skill"><b>【${esc(c.skill)}】</b> ${esc(c.blurb)}${c.skillMech ? `<i class="y-cc-mech"> 对战：${esc(c.skillMech)}</i>` : ''}</div>
           ${c.history ? `<details class="y-cc-more"><summary>小传</summary><p>${esc(c.history)}</p></details>` : ''}
         </div>
         <span class="y-cc-pick stamp">执笔</span>
@@ -564,14 +583,13 @@ function startGame() {
   S.sel = -1;
   S.log = [];
   S.vics = { p: new Set(), o: new Set() };
-  S.skillUsed = false;
   S.trUsed = false;
   S.trPending = null;
   S.logOpen = false;
   els.log.hidden = true;
 
-  S.p = { ch: pc, qi: pc.qi, mx: pc.qi, hand: [], played: [], bonus: 0, shield: false };
-  S.o = { ch: oc, qi: oc.qi, mx: oc.qi, hand: [], played: [], bonus: 0, shield: false };
+  S.p = { ch: pc, qi: pc.qi, mx: pc.qi, hand: [], played: [], bonus: 0, shield: false, absorb: false, hurtDraw: false };
+  S.o = { ch: oc, qi: oc.qi, mx: oc.qi, hand: [], played: [], bonus: 0, shield: false, absorb: false, hurtDraw: false };
 
   buildDeck();
   for (let i = 0; i < 4; i++) { drawC('p'); drawC('o'); }
@@ -650,7 +668,7 @@ async function startTurn() {
   flushPlayed();
   S.turn++;
   S.p.bonus = 0; S.o.bonus = 0;
-  S.skillUsed = false;
+  S.turnDisc = false;   // 段玉裁【拆字解谜】每回合首次限制
   S.sel = -1;
   flash('第' + S.turn + '回合 · 著书立说');
   renderAll();
@@ -660,6 +678,8 @@ async function startTurn() {
   if (S.cur === 'p') {
     drawC('p'); drawC('p');
     addLog('【准备】你摸了两张牌');
+    // 陶弘景【洞天开卷】
+    if (S.p.ch.id === 'taohongjing') { drawC('p'); addLog('【洞天开卷】' + S.p.ch.name + '额外摸一牌'); }
     renderAll();
   } else {
     await aiTurn();
@@ -689,6 +709,10 @@ async function endTurn() {
     const c = S.p.hand.pop();
     S.disc.push(c);
     addLog('【弃牌】你弃掉了「' + c.name + '」');
+  }
+  // 王肯堂【本草问诊】
+  if (S.p.ch.id === 'wangkentang' && S.p.qi > 0 && S.p.qi <= 2) {
+    gainQi('p', 1, '本草问诊·望闻问切');
   }
   addLog('你搁笔结束回合');
   renderAll();
@@ -739,6 +763,20 @@ async function applyCard(card, who, ep) {
   renderQi();
 }
 
+/* 回复统一入口：葛洪【丹火祛魅】所有回复 +1 */
+function gainQi(who, n, tag) {
+  const me = S[who];
+  if (!me) return 0;
+  const boost = me.ch.id === 'gehong' ? 1 : 0;
+  const healed = Math.max(0, Math.min(me.mx, me.qi + n + boost) - me.qi);
+  me.qi = Math.min(me.mx, me.qi + n + boost);
+  if (healed > 0) {
+    addLog((tag ? '【' + tag + '】' : '') + me.ch.name + '恢复' + healed + '点文气' + (boost ? '（丹火祛魅 +1）' : ''));
+    fxNum(healed, 'heal');
+  }
+  return healed;
+}
+
 function doArticle(card, who) {
   const pl = S[who];
   const opk = who === 'p' ? 'o' : 'p';
@@ -746,22 +784,8 @@ function doArticle(card, who) {
   let dmg = 1 + (pl.bonus || 0);
 
   if (card.sp) {
-    // 【奇正相生】恽敬：散文牌伤害时弃骈文令伤害+1
-    if (pl.ch.id === 'yujing' && card.sub === '散文') {
-      const f = pl.hand.findIndex((c) => c.sub === '骈文');
-      if (f >= 0) {
-        const dc = pl.hand.splice(f, 1)[0];
-        S.disc.push(dc);
-        dmg++;
-        addLog('【奇正相生】弃「' + dc.name + '」，伤害+1');
-      }
-    }
-    // 李兆洛：骈文作散文用（记述）
-    if (pl.ch.id === 'lizhaoluo' && card.sub === '骈文') {
-      addLog('【骈散相杂】骈文作散文用');
-    }
     if (card.draw) { for (let i = 0; i < card.draw; i++) drawC(who); addLog('摸了' + card.draw + '牌'); }
-    if (card.heal) { pl.qi = Math.min(pl.mx, pl.qi + card.heal); addLog('回复' + card.heal + '文气'); }
+    if (card.heal) gainQi(who, card.heal);
     if (card.disc && op.hand.length) {
       const ri = (Math.random() * op.hand.length) | 0;
       const dc = op.hand.splice(ri, 1)[0];
@@ -777,15 +801,17 @@ function doArticle(card, who) {
     S.disc.push(bc);
     addLog(op.ch.name + '打出「辩驳」抵消');
     fxSpark();
-    // 【研咏博访】董士锡：文章牌被响应后各摸一牌
-    if (pl.ch.id === 'dongshixi') {
-      drawC('p'); drawC('o');
-      addLog('【研咏博访】双方各摸一牌');
-    }
   } else {
-    if (op.shield && Math.random() < 0.3) {
+    // 不撑铁骨（策牌效果）：抵消下一次文气损伤
+    if (dmg > 0 && op.absorb) {
+      op.absorb = false;
+      dmg = 0;
+      addLog('【不撑铁骨】' + op.ch.name + '铁骨支贫，抵消了这次损伤');
+      fxSpark();
+    }
+    if (dmg > 0 && op.shield && Math.random() < 0.3) {
       op.shield = false;
-      addLog('【乱针绣】针线交错，闪避了伤害！');
+      addLog('护盾生效，闪避了伤害！');
       toast('闪避！');
       dmg = 0;
     }
@@ -794,35 +820,105 @@ function doArticle(card, who) {
       addLog(op.ch.name + '受' + dmg + '点损伤，剩余' + op.qi);
       fxShake();
       fxNum(dmg, 'dmg');
-      // 【缘情造端】张惠言：受损伤后立即摸两张牌
-      if (op.ch.id === 'zhanghuiyan') {
-        drawC(opk); drawC(opk);
-        addLog('【缘情造端】' + op.ch.name + '摸两牌');
+      // 戴叔伦【唤诗】：受伤后诗以遣怀
+      if (op.ch.id === 'daishulun') {
+        drawC(opk);
+        addLog('【唤诗】' + op.ch.name + '诗以遣怀，摸一牌');
+      }
+      // 万里未归（策牌效果）：受损伤后摸一牌（一次性）
+      if (op.hurtDraw) {
+        op.hurtDraw = false;
+        drawC(opk);
+        addLog('【万里未归】诗寄乡愁，摸一牌');
+      }
+      // 段玉裁【拆字解谜】：进攻方每回合首次命中拆对手一牌
+      if (pl.ch.id === 'duanyucai' && !S.turnDisc && op.hand.length) {
+        S.turnDisc = true;
+        const ri = (Math.random() * op.hand.length) | 0;
+        const dc = op.hand.splice(ri, 1)[0];
+        S.disc.push(dc);
+        addLog('【拆字解谜】' + pl.ch.name + '六书拆字，拆得「' + dc.name + '」');
+        fxSpark();
       }
     }
   }
 }
 
+/* 弃自己一张优先级最低的牌（策→宗→疗→宝→文） */
+function discardWorst(who) {
+  const me = S[who];
+  if (!me.hand.length) return null;
+  const rank = (c) => (c.type === 'jj' ? 0 : c.type === 'vic' ? 1 : c.cat === 'hel' ? 2 : c.type === 'treasure' ? 3 : 4);
+  let worst = me.hand[0];
+  for (const c of me.hand) if (rank(c) < rank(worst)) worst = c;
+  me.hand.splice(me.hand.indexOf(worst), 1);
+  S.disc.push(worst);
+  return worst;
+}
+
 function doJJ(card, who) {
   const pl = S[who];
-  if (card.name === '第一流') { pl.bonus = (pl.bonus || 0) + 1; addLog('本回合伤害+1'); fxSpark(); }
-  else if (card.name === '博学养') { drawC(who); drawC(who); addLog('摸了两牌'); fxNum(2, 'gain'); }
-  else if (card.name === '性情真') { pl.qi = Math.min(pl.mx, pl.qi + 1); addLog('回复1文气'); fxNum(1, 'heal'); }
-  else if (card.name === '济文道' || card.name === '意内言外') { drawC(who); addLog('摸一牌'); fxNum(1, 'gain'); }
-  else addLog('使用了「' + card.name + '」');
+  const opk = who === 'p' ? 'o' : 'p';
+  const op = S[opk];
+  const k = String(card.key || '').split('_')[0];
+  if (k === 'diyiliu') {                       // 山中宰相
+    pl.bonus = (pl.bonus || 0) + 1;
+    addLog('本回合立论伤害+1');
+    fxSpark();
+  } else if (k === 'zilichu') {                // 不撑铁骨
+    pl.absorb = true;
+    addLog('铁骨支贫，抵消下一次文气损伤');
+    fxSpark();
+  } else if (k === 'jiwendao') {               // 华阳洞天
+    const dc = discardWorst(who);
+    drawC(who); drawC(who);
+    addLog((dc ? '弃「' + dc.name + '」，' : '') + '摸了两牌');
+    fxNum(2, 'gain');
+  } else if (k === 'piansanhe') {              // 周礼汉读考
+    const info = op.hand.map((c) => c.name).join('、') || '（无手牌）';
+    addLog('汉读考镜，' + op.ch.name + '手牌：' + info);
+  } else if (k === 'yineiyanwai') {            // 万里未归
+    pl.hurtDraw = true;
+    addLog('诗寄乡愁：受损伤后摸一牌（一次）');
+  } else if (k === 'jingshiwen') {             // 郁冈笔麈
+    const dc = discardWorst(who);
+    const ai = op.hand.findIndex((c) => c.type === 'article');
+    if (ai >= 0) {
+      const t = op.hand.splice(ai, 1)[0];
+      S.disc.push(t);
+      addLog((dc ? '弃「' + dc.name + '」，' : '') + '批削' + op.ch.name + '「' + t.name + '」');
+    } else {
+      addLog((dc ? '弃「' + dc.name + '」，' : '') + op.ch.name + '手中无文章可削');
+    }
+  } else if (k === 'bulizong') {               // 不立宗
+    const dc = discardWorst(who);
+    if (op.hand.length) {
+      const ri = (Math.random() * op.hand.length) | 0;
+      const t = op.hand.splice(ri, 1)[0];
+      S.disc.push(t);
+      addLog((dc ? '弃「' + dc.name + '」，' : '') + '不立宗派，' + op.ch.name + '弃「' + t.name + '」');
+    } else {
+      drawC(who);
+      addLog((dc ? '弃「' + dc.name + '」，' : '') + '不立宗派，自摸一牌');
+    }
+  } else if (k === 'xingqingzhen') {           // 不耕砚田
+    gainQi(who, 1);
+  } else if (k === 'boxueyang') {              // 弃仕从医
+    drawC(who); drawC(who);
+    addLog('摸了两牌');
+    fxNum(2, 'gain');
+  } else {
+    addLog('使用了「' + card.name + '」');
+  }
 }
 
 function doZY(card, who) {
-  const pl = S[who];
-  if (card.name === '同车图' || card.name === '论文帖') {
-    pl.qi = Math.min(pl.mx, pl.qi + 1);
-    addLog('回复1文气');
-    fxNum(1, 'heal');
-  } else if (card.name === '阳湖会') {
-    S.p.qi = Math.min(S.p.mx, S.p.qi + 1);
-    S.o.qi = Math.min(S.o.mx, S.o.qi + 1);
-    addLog('各回复1文气');
-    fxNum(1, 'heal');
+  const k = String(card.key || '').split('_')[0];
+  if (k === 'tongchetu' || k === 'lunwentie') {
+    gainQi(who, 1);
+  } else if (k === 'yanghuhui') {
+    gainQi('p', 1, '文人雅集');
+    gainQi('o', 1, '文人雅集');
   } else {
     addLog('使用了「' + card.name + '」');
   }
@@ -849,14 +945,12 @@ function doTreasure(card, who) {
 
   if (tr.rule === 'shield') {
     me.shield = true;
-    addLog('【' + tr.name + '】针线交织，织就护体绣衣');
+    addLog('【' + tr.name + '】织就护盾，闪避戒备');
   } else if (tr.rule === 'heal2') {
-    me.qi = Math.min(me.mx, me.qi + 2);
-    addLog('【' + tr.name + '】品尝麻糕，恢复2点文气');
-    fxNum(2, 'heal');
+    gainQi(who, 2, tr.name);
   } else if (tr.rule === 'draw2') {
     drawC(who); drawC(who);
-    addLog('【' + tr.name + '】梳理思绪，摸了两张牌');
+    addLog('【' + tr.name + '】开卷有益，摸了两张牌');
   } else if (tr.rule === 'peek') {
     if (S.trUsed) { addLog('【' + tr.name + '】本局已使用过'); }
     else {
@@ -872,9 +966,7 @@ function doTreasure(card, who) {
       }
     }
   } else {
-    me.qi = Math.min(me.mx, me.qi + 1);
-    addLog('【' + tr.name + '】宝物现世，回复1文气');
-    fxNum(1, 'heal');
+    gainQi(who, 1, tr.name);
   }
   S.trPending = tr;
 }
@@ -915,17 +1007,11 @@ async function aiTurn() {
   const ep = S.epoch;
   drawC('o'); drawC('o');
   addLog('【准备】' + S.o.ch.name + '摸了两牌');
+  // 陶弘景【洞天开卷】
+  if (S.o.ch.id === 'taohongjing') { drawC('o'); addLog('【洞天开卷】' + S.o.ch.name + '额外摸一牌'); }
   renderAll();
   await sleep(reduced() ? 150 : 700);
   if (!alive(ep)) return;
-
-  // 【七家文选】陆继辂（AI）：弃一牌，令对方弃一牌
-  if (S.o.ch.id === 'lujilu' && !S.skillUsed && S.o.hand.length >= 3) {
-    aiSkill();
-    renderAll();
-    await sleep(reduced() ? 150 : 600);
-    if (!alive(ep)) return;
-  }
 
   let acts = 0;
   while (acts < 2 && S.active && S.o.hand.length && ep === S.epoch) {
@@ -955,6 +1041,10 @@ async function aiTurn() {
     S.disc.push(c);
     addLog(S.o.ch.name + '弃「' + c.name + '」');
   }
+  // 王肯堂【本草问诊】
+  if (S.o.ch.id === 'wangkentang' && S.o.qi > 0 && S.o.qi <= 2) {
+    gainQi('o', 1, '本草问诊·望闻问切');
+  }
   addLog(S.o.ch.name + '搁笔结束');
   renderAll();
   S.cur = 'p';
@@ -966,8 +1056,9 @@ async function aiTurn() {
 function aiPick() {
   const h = S.o.hand;
   const useful = h.filter((c) => !(c.type === 'article' && c.name === '辩驳'));
-  // 1. 宝物（留青竹刻已用则跳过）
-  let c = useful.find((x) => x.type === 'treasure' && !(x.name === '留青竹刻' && S.trUsed));
+  // 1. 宝物（窥探类已用则跳过）
+  const peekId = (S.trs.find((t) => t.rule === 'peek') || {}).id;
+  let c = useful.find((x) => x.type === 'treasure' && !(x.trId === peekId && S.trUsed));
   if (c) return c;
   // 2. 残血先疗
   if (S.o.qi <= 3) {
@@ -989,47 +1080,6 @@ function aiPick() {
   c = h.find((x) => x.type === 'vic');
   if (c && h.length >= 5) return c;
   return null;
-}
-
-function aiSkill() {
-  // 弃一张优先级最低的牌（策→宗→疗），令玩家随机弃一张
-  const rank = (c) => (c.type === 'jj' ? 0 : c.type === 'vic' ? 1 : c.cat === 'hel' ? 2 : c.type === 'treasure' ? 3 : 4);
-  let worst = S.o.hand[0];
-  for (const c of S.o.hand) if (rank(c) < rank(worst)) worst = c;
-  S.o.hand.splice(S.o.hand.indexOf(worst), 1);
-  S.disc.push(worst);
-  if (S.p.hand.length) {
-    const ri = (Math.random() * S.p.hand.length) | 0;
-    const dc = S.p.hand.splice(ri, 1)[0];
-    S.disc.push(dc);
-    addLog('【七家文选】' + S.o.ch.name + '弃「' + worst.name + '」，你弃「' + dc.name + '」');
-  } else {
-    drawC('o');
-    addLog('【七家文选】' + S.o.ch.name + '弃「' + worst.name + '」，自摸一牌');
-  }
-  S.skillUsed = true;
-}
-
-/* ---------------- 陆继辂（玩家）主动技 ---------------- */
-function useSkill() {
-  if (!S.active || S.busy || S.cur !== 'p') return;
-  if (S.p.ch.id !== 'lujilu' || S.skillUsed) return;
-  if (S.sel < 0) { toast('请先选择要弃掉的牌'); return; }
-  const dc = S.p.hand.splice(S.sel, 1)[0];
-  S.disc.push(dc);
-  S.sel = -1;
-  if (S.o.hand.length) {
-    const ri = (Math.random() * S.o.hand.length) | 0;
-    const d2 = S.o.hand.splice(ri, 1)[0];
-    S.disc.push(d2);
-    addLog('【七家文选】你弃「' + dc.name + '」，' + S.o.ch.name + '弃「' + d2.name + '」');
-  } else {
-    drawC('p');
-    addLog('【七家文选】你弃「' + dc.name + '」，自摸一牌');
-  }
-  S.skillUsed = true;
-  fxSpark();
-  renderAll();
 }
 
 /* ============================================================
@@ -1081,9 +1131,6 @@ function render() {
   const canPlay = S.active && S.cur === 'p' && S.sel >= 0 && !S.busy;
   els.btnPlay.disabled = !canPlay;
   $('[data-act="end"]', R).disabled = !(S.active && S.cur === 'p' && !S.busy);
-  const canSkill = S.active && S.cur === 'p' && !S.busy &&
-    S.p.ch.id === 'lujilu' && !S.skillUsed && S.p.hand.length > 0;
-  els.btnSkill.hidden = !canSkill;
   els.tip.textContent = S.busy ? '…'
     : !S.active ? ''
     : S.cur !== 'p' ? S.o.ch.name + ' 正在执笔'

@@ -83,7 +83,6 @@
 .hrd-strip-item:nth-child(3) { transform: rotate(var(--tilt-3)); }
 .hrd-strip-item:nth-child(4) { transform: rotate(var(--tilt-2)); }
 .hrd-strip-item:hover {
-  transform: rotate(0deg) translateY(-4px);
   box-shadow: var(--lift-strong);
   z-index: 2;
 }
@@ -145,7 +144,6 @@
 .hrd-lv:nth-child(3) { transform: rotate(var(--tilt-5)); }
 .hrd-lv:nth-child(4) { transform: rotate(var(--tilt-4)); }
 .hrd-lv:hover {
-  transform: rotate(0deg) translateY(-4px);
   box-shadow: var(--lift-strong);
 }
 
@@ -325,12 +323,11 @@
 }
 
 .hrd-tile.movable { cursor: pointer; }
+/* 可动块悬停：只出虚线框+方向标（功能性提示），不位移 */
 .hrd-tile.movable:hover .hrd-tile-face {
   outline: 2px dashed var(--ink);
   outline-offset: -2px;
-  transform: translate(-2px, -2px);
 }
-.hrd-tile.movable:active .hrd-tile-face { transform: translate(1px, 1px); }
 
 /* 滑动方向提示 */
 .hrd-tile[data-arw]::after {

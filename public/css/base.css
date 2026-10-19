@@ -123,7 +123,6 @@ p { margin: 0 0 1em; }
 .nav-links a:hover, .nav-links a.active {
   border-color: var(--ink);
   background: var(--paper-card);
-  transform: rotate(-2deg);
   box-shadow: 2px 2px 0 rgba(34, 31, 26, 0.2);
 }
 
@@ -137,6 +136,8 @@ main { padding-top: 3.4rem; }
   padding: var(--gap-xl) var(--gutter);
   max-width: 1280px;
   margin: 0 auto;
+  /* 锚点跳转：让出固定纸条导航的高度，标题不被盖住 */
+  scroll-margin-top: 3.6rem;
 }
 
 .section-head {
@@ -169,7 +170,8 @@ main { padding-top: 3.4rem; }
 .card:nth-child(3n+2) { transform: rotate(var(--tilt-2)); }
 .card:nth-child(3n+3) { transform: rotate(var(--tilt-5)); }
 
-.card:hover { transform: rotate(0deg) translateY(-3px); transition: transform var(--dur-mid) var(--ease-paper); }
+/* 悬停只加深阴影：不摆正、不抬起（静态倾角保持，动态收敛） */
+.card:hover { box-shadow: var(--lift-strong); transition: box-shadow var(--dur-fast) var(--ease-paper); }
 
 .grid {
   display: grid;
@@ -270,6 +272,6 @@ body.no-srv .offline-note.note-srv { display: block; }
     cursor: pointer;
   }
   .card, .card:nth-child(3n+1), .card:nth-child(3n+2), .card:nth-child(3n+3) { transform: none; }
-  .card:hover { transform: translateY(-2px); }
+  /* 窄屏：悬停同样只动阴影 */
   main { padding-top: 4.6rem; }
 }

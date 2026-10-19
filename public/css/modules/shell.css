@@ -230,19 +230,6 @@
 .vision-body .v-card:nth-child(2) { transform: rotate(var(--tilt-4)); }
 .vision-body .v-card:nth-child(3) { transform: rotate(var(--tilt-5)); }
 
-.vision-quote {
-  grid-column: 1 / -1;
-  margin: var(--gap-sm) 0 0;
-  padding: var(--gap-sm) var(--gap-md);
-  border-left: 4px solid var(--riso-red);
-  background: var(--paper-deep);
-  font-family: var(--font-serif);
-  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
-  line-height: 1.9;
-  transform: rotate(-0.6deg);
-  box-shadow: var(--lift);
-}
-
 /* ---------------- 页脚 ---------------- */
 .site-footer {
   padding: var(--gap-lg) var(--gutter) var(--gap-md);
@@ -273,21 +260,16 @@
 .site-footer .footer-author .at { color: var(--riso-red); }
 
 /* ---------------- 进场动效 · 组件倾角落定（终点态，全模式生效） ---------------- */
-.vision-quote.reveal.in { transform: rotate(-0.6deg); }
-
-.card.reveal.in:not(:hover):nth-child(3n+1) { transform: rotate(var(--tilt-1)); }
-.card.reveal.in:not(:hover):nth-child(3n+2) { transform: rotate(var(--tilt-2)); }
-.card.reveal.in:not(:hover):nth-child(3n+3) { transform: rotate(var(--tilt-5)); }
-.card.reveal.in:hover { transform: rotate(0deg) translateY(-3px); }
+/* 静态倾角：悬停不摆正不抬起，阴影反馈见 base.css .card:hover */
+.card.reveal.in:nth-child(3n+1) { transform: rotate(var(--tilt-1)); }
+.card.reveal.in:nth-child(3n+2) { transform: rotate(var(--tilt-2)); }
+.card.reveal.in:nth-child(3n+3) { transform: rotate(var(--tilt-5)); }
 
 @media (prefers-reduced-motion: no-preference) {
   /* 起点态：位移+微旋+微缩，落定时回到组件各自的倾角 */
   .act.reveal:not(.in),
   .vision-body .v-card.reveal:not(.in) {
     transform: translateY(34px) rotate(1.6deg) scale(0.98);
-  }
-  .vision-quote.reveal:not(.in) {
-    transform: translateY(34px) rotate(-2.2deg) scale(0.98);
   }
   .card.reveal:not(.in) {
     transform: translateY(38px) rotate(1.6deg) scale(0.97);
@@ -322,8 +304,7 @@
 @media (max-width: 760px) {
   .reveal:not(.in) { transform: translateY(30px); }
   .card.reveal:not(.in) { transform: translateY(30px); }
-  .card.reveal.in:not(:hover):nth-child(3n + 1),
-  .card.reveal.in:not(:hover):nth-child(3n + 2),
-  .card.reveal.in:not(:hover):nth-child(3n + 3) { transform: none; }
-  .card.reveal.in:hover { transform: translateY(-2px); }
+  .card.reveal.in:nth-child(3n + 1),
+  .card.reveal.in:nth-child(3n + 2),
+  .card.reveal.in:nth-child(3n + 3) { transform: none; }
 }
